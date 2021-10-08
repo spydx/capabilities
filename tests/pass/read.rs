@@ -1,6 +1,8 @@
 use capabilities_proc_macro::capability;
 
-#[capability(Create, Read, Update)]
+
+// Create, Read, Update, Delete, ReadAll, UpdateAll, DeleteAll, All
+#[capability(Create)]
 struct User {
     pub name: String,
     pub password: String,
@@ -8,9 +10,9 @@ struct User {
 
 
 #[capability(All)]
-struct Users {
+struct Accounts {
     pub name: String,
-    pub password: String,
+    pub dallaz: String,
 }
 
 fn main() {
