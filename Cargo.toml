@@ -1,0 +1,35 @@
+[package]
+name = "capabilities"
+version = "0.1.0"
+edition = "2021"
+description = "A proc macro for capability design"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+keywords = ["capabilities"]
+categories = ["development-tools"]
+homepage = "https://github.com/spydx/capabilities"
+repository = "https://github.com/spydx/capabilities"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[test]]
+name = "tests"
+path = "tests/cap_tests.rs"
+
+[dependencies]
+quote = "1.0.9"
+syn = { version = "1.0.78", features = ["full"] }
+proc-macro2 = "1.0"
+async-trait = "0.1.51"
+
+[dev-dependencies]
+tokio = { version = "1.11.0", features = ["full"] }
+trybuild = "1.0.46"
+
+[dependencies.capabilities-proc-macro]
+version = "0.1.0"
+path = "capabilities-proc-macro"
+package = "capabilities-proc-macro"
+
+[workspace]
+members = ["capabilities-proc-macro"]

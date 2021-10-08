@@ -1,0 +1,16 @@
+[package]
+name = "capabilities-proc-macro"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quote = "1.0.9"
+syn = { version = "1.0.78", features = ["full"] }
+proc-macro2 = "1.0"
+async-trait = "0.1.51"
+darling = "0.13.0"
