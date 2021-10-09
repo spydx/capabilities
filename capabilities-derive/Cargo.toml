@@ -1,5 +1,5 @@
 [package]
-name = "capabilities-proc-macro"
+name = "capabilities-derive"
 version = "0.1.0"
 edition = "2021"
 

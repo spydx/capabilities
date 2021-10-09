@@ -1,5 +1,4 @@
-use capabilities_proc_macro::capability;
-
+use capabilities_derive::capability;
 
 // Create, Read, Update, Delete, ReadAll, UpdateAll, DeleteAll, All
 #[capability(Create)]

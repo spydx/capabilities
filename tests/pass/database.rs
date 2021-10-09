@@ -1,4 +1,4 @@
-use capabilities_proc_macro::database;
+use capabilities_derive::database;
 
 #[database()]
 struct Database {

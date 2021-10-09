@@ -1,3 +1,3 @@
-pub extern crate capabilities_proc_macro;
+pub extern crate capabilities_derive;
 
-pub use ::capabilities_proc_macro::capability;
+pub use ::capabilities_derive::capability;
