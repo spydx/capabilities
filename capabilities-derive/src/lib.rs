@@ -37,7 +37,7 @@ pub fn service(_args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         }
     };
 
-    let fieldname: Option<&Field> = match s.unwrap().fields {
+    let field_name: Option<&Field> = match s.unwrap().fields {
         Fields::Named(ref f) => f.named.first().to_owned(),
         Fields::Unnamed(_) => {
             eprintln!("Fields of struct must be named");
@@ -51,7 +51,7 @@ pub fn service(_args: TokenStream, annotated_item: TokenStream) -> TokenStream {
 
 
     let ident = s.unwrap().ident.to_owned();
-    let db = fieldname.unwrap().ident.as_ref().unwrap();
+    let db = field_name.unwrap().ident.as_ref().unwrap();
 
     let out = quote! {
         #s
