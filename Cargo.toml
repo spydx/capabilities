@@ -4,9 +4,8 @@ version = "0.1.0"
 edition = "2021"
 description = "A proc macro for capability design"
 readme = "README.md"
-license = "MIT OR Apache-2.0"
 keywords = ["capabilities"]
-categories = ["development-tools"]
+categories = ["software design"]
 homepage = "https://github.com/spydx/capabilities"
 repository = "https://github.com/spydx/capabilities"
 

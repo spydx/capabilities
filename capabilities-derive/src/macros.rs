@@ -8,6 +8,14 @@ macro_rules! database_cap {
     }
 }
 
+#[async_trait]
+pub trait Capability<Operation> {
+    type Data;
+    type Error;
+    async fn perform(&self, _: Operation) -> Result<Self::Data, Self::Error>;
+}
+
+
 #[allow(unused_macros)]
 macro_rules! cap {
     ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {

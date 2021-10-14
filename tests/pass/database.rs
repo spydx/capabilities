@@ -1,10 +1,11 @@
-use capabilities_derive::database;
+use capabilities_derive::capability;
 
-#[database()]
+#[capability]
 struct Database {
-    pub db: String,
+    pub _db: String,
 }
 
+#[allow(dead_code)]
 fn main() {
 
 }
