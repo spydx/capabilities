@@ -1,6 +1,6 @@
-use capabilities_derive::capability;
+use capabilities_derive::service;
 
-#[capability]
+#[service]
 struct Database {
     pub _db: String,
 }

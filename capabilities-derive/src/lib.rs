@@ -12,6 +12,8 @@ use syn::spanned::Spanned;
 #[allow(unused_imports)]
 use syn::{parse, parse_macro_input, AttributeArgs, DeriveInput};
 use syn::{Field, Fields, Item, ItemStruct};
+use syn::__private::Span;
+
 
 struct Items {
     pub item_struct: Option<ItemStruct>,
@@ -22,7 +24,7 @@ pub fn service(_args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     /*
        1. Should be a struct
        2. Needs a build pattern for database and base url for client.
-       3. creates the trait for the others to inherit/implement.
+       3. Creates the trait for the others to inherit/implement.
     */
     let item: Item = parse_macro_input!(annotated_item);
 
@@ -33,7 +35,7 @@ pub fn service(_args: TokenStream, annotated_item: TokenStream) -> TokenStream {
                 .unstable()
                 .error("Capability service can only annotate Structs")
                 .emit();
-            None
+            panic!("cannot continue compiling with this error")
         }
     };
 
@@ -50,16 +52,21 @@ pub fn service(_args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     };
 
 
+
     let ident = s.unwrap().ident.to_owned();
+    let mut error_str = ident.to_string();
+    error_str.push_str("Error");
+    let error_ident = syn::Ident::new(error_str.as_str(), Span::call_site());
+
     let db = field_name.unwrap().ident.as_ref().unwrap();
 
     let out = quote! {
         #s
         #[derive(Debug)]
-        struct DatabaseError;
-
+        pub struct #error_ident;
+        
         impl #ident {
-            pub async fn build(conf: String) -> Result<Self, DatabaseError> {
+            pub async fn build(conf: String) -> Result<Self, #error_ident> {
                 Ok ( Self { #db: conf })
             }
         }
@@ -100,8 +107,9 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         #item
         use async_trait::async_trait;
         pub struct User;
-        pub struct DatabaseError;
+        
         pub struct Read<T>(T);
+
         #[async_trait]
         pub trait Capability<Operation> {
             type Data;
