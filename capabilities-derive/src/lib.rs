@@ -8,15 +8,42 @@ use darling::FromMeta;
 use quote::format_ident;
 #[allow(unused_imports)]
 use quote::quote;
+use syn::__private::Span;
 use syn::spanned::Spanned;
 #[allow(unused_imports)]
 use syn::{parse, parse_macro_input, AttributeArgs, DeriveInput};
 use syn::{Field, Fields, Item, ItemStruct};
-use syn::__private::Span;
-
 
 struct Items {
     pub item_struct: Option<ItemStruct>,
+}
+
+//[proc_macro] // should be this instead
+#[proc_macro_attribute]
+pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    let item: Item = parse_macro_input!(annotated_item);
+    let input_args: AttributeArgs = parse_macro_input!(args);
+    assert_eq!(input_args.len(), 1);
+
+
+    let out = quote! {
+        
+        pub struct CapService {
+            con: String,
+        }
+
+        #[derive(Debug)]
+        pub struct CapServiceError;
+
+
+        impl CapService {
+            pub async fn build(conf: String) -> Result<Self, crate::CapServiceError> {
+                Ok ( Self { con: conf })
+            }
+        }
+        #item
+    };
+    out.into()
 }
 
 #[proc_macro_attribute]
@@ -51,8 +78,6 @@ pub fn service(_args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         }
     };
 
-
-
     let ident = s.unwrap().ident.to_owned();
     let mut error_str = ident.to_string();
     error_str.push_str("Error");
@@ -64,7 +89,7 @@ pub fn service(_args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         #s
         #[derive(Debug)]
         pub struct #error_ident;
-        
+
         impl #ident {
             pub async fn build(conf: String) -> Result<Self, #error_ident> {
                 Ok ( Self { #db: conf })
@@ -107,7 +132,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         #item
         use async_trait::async_trait;
         pub struct User;
-        
+
         pub struct Read<T>(T);
 
         #[async_trait]

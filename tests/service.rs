@@ -1,6 +1,9 @@
+
+use capabilities_derive::svc;
+
 use capabilities_derive::service;
 
-#[allow(dead_code)]
+
 #[service]
 struct Database {
     pub db: String,
