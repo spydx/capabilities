@@ -1,8 +1,4 @@
-
-use capabilities_derive::svc;
-
 use capabilities_derive::service;
-
 
 #[service]
 struct Database {
