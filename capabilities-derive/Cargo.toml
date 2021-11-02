@@ -14,4 +14,3 @@ syn = { version = "1.0.78", features = ["full"] }
 proc-macro2 = "1.0"
 async-trait = "0.1.51"
 darling = "0.13.0"
-

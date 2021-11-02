@@ -1,5 +1,6 @@
-
 use capabilities_derive::svc;
+use sqlx::pool::Pool;
+use sqlx::sqlite::Sqlite;
 
 #[svc(Sqlite)]
 #[tokio::main]

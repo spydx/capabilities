@@ -10,26 +10,61 @@ use quote::format_ident;
 use quote::quote;
 use syn::__private::Span;
 use syn::spanned::Spanned;
-#[allow(unused_imports)]
-use syn::{parse, parse_macro_input, AttributeArgs, DeriveInput};
-use syn::{Field, Fields, Item, ItemStruct};
+
+use syn::{Attribute, Error, Meta, NestedMeta, Result, parse_macro_input, AttributeArgs, Field, Fields, Item, ItemStruct};
+
+
 
 struct Items {
     pub item_struct: Option<ItemStruct>,
 }
 
+
 //[proc_macro] // should be this instead
 #[proc_macro_attribute]
 pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let item: Item = parse_macro_input!(annotated_item);
-    let input_args: AttributeArgs = parse_macro_input!(args);
-    assert_eq!(input_args.len(), 1);
+    let input_args: AttributeArgs= parse_macro_input!(args);
 
+    let service = input_args.first().cloned();
+
+    if input_args.len() > 1 {
+        service
+            .span()
+            .unstable()
+            .error("Only supports one argument, SQLite or Request")
+            .emit();
+    }
+
+    let service_type = match service.unwrap() {
+        NestedMeta::Meta(nm) => {
+            let allowed_type = match nm.clone() {
+                Meta::Path(String) => Some(nm),
+                _ => {
+                    nm.span()
+                        .unstable()
+                        .error("There is no support for this type")
+                        .emit();
+                    None
+                }
+            };
+            Some(allowed_type)
+        }
+        _ => {
+            input_args.first().span()
+                .unstable()
+                .error("No literals allowed, only use SQlite or Reqwest")
+                .emit();
+            None
+        }
+    };
+    let service_token = service_type.unwrap().unwrap();
 
     let out = quote! {
+        use sqlx::pool::Pool;
         
         pub struct CapService {
-            con: String,
+            con: #service_token,
         }
 
         #[derive(Debug)]
@@ -38,7 +73,11 @@ pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
 
         impl CapService {
             pub async fn build(conf: String) -> Result<Self, crate::CapServiceError> {
-                Ok ( Self { con: conf })
+                let con = Pool::connect(&conf)
+                    .await
+                    .expect("Failed to connect database");
+
+                Ok ( Self { con: con })
             }
         }
         #item
