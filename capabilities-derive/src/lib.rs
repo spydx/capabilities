@@ -147,6 +147,14 @@ fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
     out.into()
 }
 
+#[proc_macro_attribute]
+pub fn capabilities(_args: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    let item: Item = parse_macro_input!(annotated_item);
+    let out = quote! {
+        #item
+    };
+    out.into()
+}
 
 #[proc_macro_attribute]
 pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
