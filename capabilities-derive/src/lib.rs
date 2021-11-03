@@ -1,20 +1,13 @@
 #![feature(proc_macro_diagnostic)]
 
 use proc_macro::TokenStream;
-
-#[allow(unused_imports)]
-use darling::FromMeta;
-#[allow(unused_imports)]
-use quote::format_ident;
-#[allow(unused_imports)]
 use quote::quote;
 use syn::__private::Span;
 use syn::spanned::Spanned;
 
-#[allow(unused_imports)]
 use syn::{
-    parse_macro_input, Attribute, AttributeArgs, Error, Field, Fields, Ident, Item, ItemStruct,
-    Meta, NestedMeta, Result,
+    parse_macro_input, AttributeArgs, Field, Fields, Item, ItemStruct,
+    Meta, NestedMeta,
 };
 
 struct Items {
@@ -32,7 +25,14 @@ pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         service
             .span()
             .unstable()
-            .error("Only supports one argument, SQLite or Request")
+            .error("Only supports one argument")
+            .emit();
+    }
+
+    if service.is_none() {
+        service.span()
+            .unstable()
+            .error("Unsupported literal, has to be a type from Capabilities lib")
             .emit();
     }
 
@@ -73,13 +73,28 @@ pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
                 .first()
                 .span()
                 .unstable()
-                .error("No literals allowed, only use SQlite or Reqwest")
+                .error("No literals allowed")
                 .emit();
             None
         }
     };
-    let service_token = service_type.unwrap();
+    let service_token = service_type.unwrap().unwrap();
 
+    let out = match service_token.path().get_ident().unwrap().to_string().as_str() {
+        "PoolSqlite" => Some(impl_code_database(service_token, item)),
+        "WebService" => Some(impl_code_webservice(service_token, item)),
+        _ => {
+            service_token.span().unstable().error("Unknown error").emit();
+            None
+        },
+    };
+    if out.is_none() {
+
+    }
+    out.unwrap()
+}
+
+fn impl_code_database(service_token: Meta, item: Item) -> TokenStream {
     let out = quote! {
         pub struct CapService {
             con: #service_token,
@@ -100,6 +115,28 @@ pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         }
         #item
     };
+    out.into()
+}
+
+fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
+    let out = quote! { 
+        pub struct CapService {
+            con: #service_token,
+        }
+
+        #[derive(Debug)]
+        pub struct CapServiceError;
+
+        impl CapService {
+            pub async fn build() -> Result<Self, crate::CapServiceError> {
+                let con = Client::new();
+
+                Self { con: con }
+            }
+        }
+        #item
+    };
+
     out.into()
 }
 
