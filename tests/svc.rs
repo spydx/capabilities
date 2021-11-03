@@ -1,7 +1,6 @@
+use capabilities::PoolSqlite;
 use capabilities_derive::svc;
-use capabilities::{PoolSqlite, WebService};
 use sqlx::pool::Pool;
-
 
 #[svc(PoolSqlite)]
 #[tokio::main]

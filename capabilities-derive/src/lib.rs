@@ -12,7 +12,10 @@ use syn::__private::Span;
 use syn::spanned::Spanned;
 
 #[allow(unused_imports)]
-use syn::{Attribute, Ident, Error, Meta, NestedMeta, Result, parse_macro_input, AttributeArgs, Field, Fields, Item, ItemStruct};
+use syn::{
+    parse_macro_input, Attribute, AttributeArgs, Error, Field, Fields, Ident, Item, ItemStruct,
+    Meta, NestedMeta, Result,
+};
 
 struct Items {
     pub item_struct: Option<ItemStruct>,
@@ -21,7 +24,7 @@ struct Items {
 #[proc_macro_attribute]
 pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let item: Item = parse_macro_input!(annotated_item);
-    let input_args: AttributeArgs= parse_macro_input!(args);
+    let input_args: AttributeArgs = parse_macro_input!(args);
 
     let service = input_args.first().cloned();
 
@@ -37,25 +40,28 @@ pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         NestedMeta::Meta(nm) => {
             let allowed_type = match nm.clone() {
                 Meta::Path(type_ident) => {
-
                     let t = match type_ident.get_ident().unwrap().to_string().as_str() {
                         "PoolSqlite" => Some(nm),
                         "WebService" => Some(nm),
-                        _ => {nm.span()
+                        _ => {
+                            nm.span()
                                 .unstable()
                                 .error("Only \"PoolSqlite\" or \"WebService\" allowed")
                                 .emit();
                             None
-                        },
+                        }
                     };
 
                     t
-                },
+                }
                 _ => {
                     let ident = nm.path().get_ident().unwrap().to_string();
                     nm.span()
                         .unstable()
-                        .error(format!("Unknown type, there is no support for this type: {}", ident))
+                        .error(format!(
+                            "Unknown type, there is no support for this type: {}",
+                            ident
+                        ))
                         .emit();
                     None
                 }
@@ -63,7 +69,9 @@ pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
             Some(allowed_type)
         }
         _ => {
-            input_args.first().span()
+            input_args
+                .first()
+                .span()
                 .unstable()
                 .error("No literals allowed, only use SQlite or Reqwest")
                 .emit();
