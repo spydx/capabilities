@@ -2,20 +2,16 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::__private::Span;
 use syn::spanned::Spanned;
 
-use syn::{
-    parse_macro_input, AttributeArgs, Field, Fields, Item, ItemStruct,
-    Meta, NestedMeta,
-};
+use syn::{parse_macro_input, AttributeArgs, Item, ItemStruct, Meta, NestedMeta};
 
 struct Items {
     pub item_struct: Option<ItemStruct>,
 }
 
 #[proc_macro_attribute]
-pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
+pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let item: Item = parse_macro_input!(annotated_item);
     let input_args: AttributeArgs = parse_macro_input!(args);
 
@@ -30,7 +26,8 @@ pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     }
 
     if service.is_none() {
-        service.span()
+        service
+            .span()
             .unstable()
             .error("Unsupported literal, has to be a type from Capabilities lib")
             .emit();
@@ -42,11 +39,12 @@ pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
                 Meta::Path(type_ident) => {
                     let t = match type_ident.get_ident().unwrap().to_string().as_str() {
                         "PoolSqlite" => Some(nm),
+                        "PoolPostgres" => Some(nm),
                         "WebService" => Some(nm),
                         _ => {
                             nm.span()
                                 .unstable()
-                                .error("Only \"PoolSqlite\" or \"WebService\" allowed")
+                                .error("Only \"PoolSqlite\", \"PoolPostgres\", or \"WebService\" allowed")
                                 .emit();
                             None
                         }
@@ -80,17 +78,26 @@ pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     };
     let service_token = service_type.unwrap().unwrap();
 
-    let out = match service_token.path().get_ident().unwrap().to_string().as_str() {
+    let out = match service_token
+        .path()
+        .get_ident()
+        .unwrap()
+        .to_string()
+        .as_str()
+    {
         "PoolSqlite" => Some(impl_code_database(service_token, item)),
+        "PoolPostgres" => Some(impl_code_database(service_token, item)),
         "WebService" => Some(impl_code_webservice(service_token, item)),
         _ => {
-            service_token.span().unstable().error("Unknown error").emit();
+            service_token
+                .span()
+                .unstable()
+                .error("Unknown error")
+                .emit();
             None
-        },
+        }
     };
-    if out.is_none() {
-
-    }
+    if out.is_none() {}
     out.unwrap()
 }
 
@@ -119,7 +126,7 @@ fn impl_code_database(service_token: Meta, item: Item) -> TokenStream {
 }
 
 fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
-    let out = quote! { 
+    let out = quote! {
         pub struct CapService {
             con: #service_token,
         }
@@ -131,7 +138,7 @@ fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
             pub async fn build() -> Result<Self, crate::CapServiceError> {
                 let con = Client::new();
 
-                Self { con: con }
+                Ok(Self { con: con })
             }
         }
         #item
@@ -140,58 +147,6 @@ fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
     out.into()
 }
 
-#[proc_macro_attribute]
-pub fn service(_args: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    /*
-       1. Should be a struct
-       2. Needs a build pattern for database and base url for client.
-       3. Creates the trait for the others to inherit/implement.
-    */
-    let item: Item = parse_macro_input!(annotated_item);
-
-    let s = match item {
-        Item::Struct(ref s) => Some(s),
-        _ => {
-            item.span()
-                .unstable()
-                .error("Capability service can only annotate Structs")
-                .emit();
-            panic!("cannot continue compiling with this error")
-        }
-    };
-
-    let field_name: Option<&Field> = match s.unwrap().fields {
-        Fields::Named(ref f) => f.named.first().to_owned(),
-        Fields::Unnamed(_) => {
-            eprintln!("Fields of struct must be named");
-            None
-        }
-        Fields::Unit => {
-            eprintln!("Cannot be a unit filed");
-            None
-        }
-    };
-
-    let ident = s.unwrap().ident.to_owned();
-    let mut error_str = ident.to_string();
-    error_str.push_str("Error");
-    let error_ident = syn::Ident::new(error_str.as_str(), Span::call_site());
-
-    let db = field_name.unwrap().ident.as_ref().unwrap();
-
-    let out = quote! {
-        #s
-        #[derive(Debug)]
-        pub struct #error_ident;
-
-        impl #ident {
-            pub async fn build(conf: String) -> Result<Self, #error_ident> {
-                Ok ( Self { #db: conf })
-            }
-        }
-    };
-    out.into()
-}
 
 #[proc_macro_attribute]
 pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
