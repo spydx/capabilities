@@ -11,16 +11,13 @@ use quote::quote;
 use syn::__private::Span;
 use syn::spanned::Spanned;
 
-use syn::{Attribute, Error, Meta, NestedMeta, Result, parse_macro_input, AttributeArgs, Field, Fields, Item, ItemStruct};
-
-
+#[allow(unused_imports)]
+use syn::{Attribute, Ident, Error, Meta, NestedMeta, Result, parse_macro_input, AttributeArgs, Field, Fields, Item, ItemStruct};
 
 struct Items {
     pub item_struct: Option<ItemStruct>,
 }
 
-
-//[proc_macro] // should be this instead
 #[proc_macro_attribute]
 pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let item: Item = parse_macro_input!(annotated_item);
@@ -39,11 +36,26 @@ pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let service_type = match service.unwrap() {
         NestedMeta::Meta(nm) => {
             let allowed_type = match nm.clone() {
-                Meta::Path(String) => Some(nm),
+                Meta::Path(type_ident) => {
+
+                    let t = match type_ident.get_ident().unwrap().to_string().as_str() {
+                        "PoolSqlite" => Some(nm),
+                        "WebService" => Some(nm),
+                        _ => {nm.span()
+                                .unstable()
+                                .error("Only \"PoolSqlite\" or \"WebService\" allowed")
+                                .emit();
+                            None
+                        },
+                    };
+
+                    t
+                },
                 _ => {
+                    let ident = nm.path().get_ident().unwrap().to_string();
                     nm.span()
                         .unstable()
-                        .error("There is no support for this type")
+                        .error(format!("Unknown type, there is no support for this type: {}", ident))
                         .emit();
                     None
                 }
@@ -58,11 +70,9 @@ pub fn svc(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
             None
         }
     };
-    let service_token = service_type.unwrap().unwrap();
+    let service_token = service_type.unwrap();
 
     let out = quote! {
-        use sqlx::pool::Pool;
-        
         pub struct CapService {
             con: #service_token,
         }

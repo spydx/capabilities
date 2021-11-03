@@ -1,8 +1,9 @@
 use capabilities_derive::svc;
+use capabilities::{PoolSqlite, WebService};
 use sqlx::pool::Pool;
-use sqlx::sqlite::Sqlite;
 
-#[svc(Sqlite)]
+
+#[svc(PoolSqlite)]
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     let connection_string = "Kenneth".to_string();
@@ -10,6 +11,6 @@ async fn main() -> Result<(), std::io::Error> {
         .await
         .expect("Failed to create database");
 
-    println!("{}", pool.con);
+    println!("{:?}", pool.con);
     Ok(())
 }

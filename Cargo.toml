@@ -21,11 +21,11 @@ syn = { version = "1.0.78", features = ["full"] }
 proc-macro2 = "1.0"
 async-trait = "0.1.51"
 reqwest = "0.11.6"
+sqlx = { version = "0.5.9", features = ["migrate","runtime-actix-rustls","offline","macros", "sqlite", "postgres"] }
 
 [dev-dependencies]
 tokio = { version = "1.11.0", features = ["full"] }
 trybuild = "1.0.46"
-sqlx = { version = "0.5.9", features = ["migrate","runtime-actix-rustls","offline","macros", "sqlite", "postgres"] }
 
 [dependencies.capabilities-derive]
 version = "0.1.0"
