@@ -1,0 +1,15 @@
+error: Unsupported literal, has to be a type from Capabilities lib
+ --> $DIR/service_struct.rs:9:1
+  |
+9 | #[service]
+  | ^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `service` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: custom attribute panicked
+ --> $DIR/service_struct.rs:9:1
+  |
+9 | #[service]
+  | ^^^^^^^^^^
+  |
+  = help: message: called `Option::unwrap()` on a `None` value
