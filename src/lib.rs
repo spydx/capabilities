@@ -4,9 +4,9 @@ pub use ::capabilities_derive::capability;
 pub use ::capabilities_derive::service;
 
 use reqwest::Client;
-use sqlx::Postgres;
 use sqlx::pool::Pool;
 use sqlx::sqlite::Sqlite;
+use sqlx::Postgres;
 
 pub enum Operations {
     Create,
