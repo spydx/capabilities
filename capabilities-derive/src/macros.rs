@@ -17,6 +17,7 @@ pub trait Capability<Operation> {
 
 
 #[allow(unused_macros)]
+#[macro_export]
 macro_rules! cap {
     ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
         #[async_trait]

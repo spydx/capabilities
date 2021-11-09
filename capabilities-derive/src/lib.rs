@@ -1,14 +1,10 @@
 #![feature(proc_macro_diagnostic)]
 
 use proc_macro::TokenStream;
-use quote::quote;
+use proc_macro2::TokenStream as TokenStream2;
+use quote::{format_ident, quote};
 use syn::spanned::Spanned;
-
-use syn::{parse_macro_input, AttributeArgs, Item, ItemStruct, Meta, NestedMeta};
-
-struct Items {
-    pub item_struct: Option<ItemStruct>,
-}
+use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
 
 #[proc_macro_attribute]
 pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
@@ -103,6 +99,7 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
 
 fn impl_code_database(service_token: Meta, item: Item) -> TokenStream {
     let out = quote! {
+        use async_trait::async_trait;
         pub struct CapService {
             con: #service_token,
         }
@@ -120,6 +117,12 @@ fn impl_code_database(service_token: Meta, item: Item) -> TokenStream {
                 Ok ( Self { con: con })
             }
         }
+        #[async_trait]
+        pub trait Capability<Operation> {
+            type Data;
+            type Error;
+            async fn perform(&self, _: Operation) -> Result<Self::Data, Self::Error>;
+        }
         #item
     };
     out.into()
@@ -127,6 +130,7 @@ fn impl_code_database(service_token: Meta, item: Item) -> TokenStream {
 
 fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
     let out = quote! {
+        use async_trait::async_trait;
         pub struct CapService {
             con: #service_token,
         }
@@ -141,47 +145,94 @@ fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
                 Ok(Self { con: con })
             }
         }
+        #[async_trait]
+        pub trait Capability<Operation> {
+            type Data;
+            type Error;
+            async fn perform(&self, _: Operation) -> Result<Self::Data, Self::Error>;
+        }
         #item
     };
 
     out.into()
 }
+
+fn gen_trait() -> TokenStream2 {
+    quote! {
+        #[async_trait]
+        pub trait Capability<Read<String>, Data = Orders, Error = CapServiceError> for CapService {
+            
+        }
+    }
+}
+
 
 #[proc_macro_attribute]
-pub fn capabilities(_args: TokenStream, annotated_item: TokenStream) -> TokenStream {
+pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    macro_rules! cap {
+        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
+            #[async_trait]
+            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+    
+            #[async_trait]
+            impl $name for $type {}
+        };
+    }
     let item: Item = parse_macro_input!(annotated_item);
+
+    let _attr_args: AttributeArgs = parse_macro_input!(args);
+
+    let s = match item {
+        Item::Struct(ref s) =>
+            Some(s.to_owned()),
+        _ => {
+            item.span()
+                .unstable()
+                .error("We only support structs")
+                .emit();
+                None
+        }
+    };
+    if s.is_none() {
+        panic!("Cannot continue");
+    }
+
+    let ident_struct = s.unwrap();
+    
+    let canread = format_ident!("Can{}{}", "Read", ident_struct.ident);
+
     let out = quote! {
-        #item
+        #ident_struct
+        pub struct Read<T>(T);
+ 
+        cap! (#canread for CapService, composing { Read<String>, #ident_struct.ident, CapServiceError});
     };
     out.into()
 }
+
 
 #[proc_macro_attribute]
 pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     /*
-       1. Implements for the struct and functions
-       2. for struct, it creates the cap! traits
+       1. Implements for the fn
        3. for fn it implements the trait.
     */
     let _attr_args: AttributeArgs = parse_macro_input!(args);
     let item: Item = parse_macro_input!(annotated_item);
 
     let s = match item {
-        Item::Struct(ref s) => {
-            eprintln!("{}", s.ident);
-            Items {
-                item_struct: Some(s.to_owned()),
-            }
+        Item::Fn(ref s) => {
+            Some(s)
         }
         _ => {
             item.span()
                 .unstable()
-                .error("We only support structs for now")
+                .error("We only support fn for now")
                 .emit();
-            Items { item_struct: None }
+                None
         }
     };
-    let ident = s.item_struct.unwrap().ident;
+    let ident = &s.unwrap().sig;
 
     eprintln!("{:?}", ident);
 
@@ -191,13 +242,6 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         pub struct User;
 
         pub struct Read<T>(T);
-
-        #[async_trait]
-        pub trait Capability<Operation> {
-            type Data;
-            type Error;
-            async fn perform(&self, _: Operation) -> Result<Self::Data, Self::Error>;
-        }
 
         #[async_trait]
         impl Capability<Read<String>> for #ident {
