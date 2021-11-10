@@ -18,20 +18,20 @@ macro_rules! cap {
     };
 }
 struct Orders {
-    id: i32, 
+    id: i32,
     name: String,
 }
 
 struct Database;
 struct DatabaseError;
 
-struct Read<T>{data: T}
+struct Read<T> {
+    data: T,
+}
 
 cap!(CanReadOrders for Database, composing { Read<String>, Orders, DatabaseError} );
 
-
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    
     Ok(())
 }
