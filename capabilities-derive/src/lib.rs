@@ -157,6 +157,7 @@ fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
     out.into()
 }
 
+#[allow(dead_code)]
 fn gen_trait() -> TokenStream2 {
     quote! {
         #[async_trait]
@@ -169,18 +170,11 @@ fn gen_trait() -> TokenStream2 {
 
 #[proc_macro_attribute]
 pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    macro_rules! cap {
-        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
-            #[async_trait]
-            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
-    
-            #[async_trait]
-            impl $name for $type {}
-        };
-    }
+
     let item: Item = parse_macro_input!(annotated_item);
 
-    let _attr_args: AttributeArgs = parse_macro_input!(args);
+    let attr_args: AttributeArgs = parse_macro_input!(args);
+
 
     let s = match item {
         Item::Struct(ref s) =>
@@ -199,12 +193,39 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
 
     let ident_struct = s.unwrap();
     
+    let mut caps = vec![];
+
+    for t in attr_args {
+        let m = match t {
+            NestedMeta::Meta(m) => {
+                match m {
+                    Meta::Path(ident) => Some(ident),
+                    _ => None,
+                }
+            },
+            _ => None,
+        };
+        if m.is_some() {
+            let val = m.unwrap();
+            caps.push(val);
+        }
+    }
     let canread = format_ident!("Can{}{}", "Read", ident_struct.ident);
 
     let out = quote! {
+        use ::capabilities::Read;
+
         #ident_struct
-        pub struct Read<T>(T);
- 
+        
+        macro_rules! cap {
+            ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
+                #[async_trait]
+                pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+        
+                #[async_trait]
+                impl $name for $type {}
+            };
+        }
         cap! (#canread for CapService, composing { Read<String>, #ident_struct.ident, CapServiceError});
     };
     out.into()
