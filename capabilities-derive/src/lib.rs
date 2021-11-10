@@ -210,6 +210,12 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
             caps.push(val);
         }
     }
+    let mut capidents = vec![];
+    for _identifier in caps {
+        let ident = format_ident!("Can{}{}", "Read", stringify!(_identifier));
+        capidents.push(ident);
+    }
+
     let canread = format_ident!("Can{}{}", "Read", ident_struct.ident);
 
     let out = quote! {
@@ -226,6 +232,7 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
                 impl $name for $type {}
             };
         }
+
         cap! (#canread for CapService, composing { Read<String>, #ident_struct.ident, CapServiceError});
     };
     out.into()
