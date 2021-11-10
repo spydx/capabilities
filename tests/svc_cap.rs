@@ -1,13 +1,12 @@
 use capabilities::PoolSqlite;
-use capabilities_derive::service;
 use capabilities_derive::capabilities;
+use capabilities_derive::service;
 use sqlx::Pool;
 
-
-#[capabilities(Read, Update)]
+#[capabilities(Create, Read, Update, Delete)]
 struct Orders {
-    id: i32, 
-    name: String, 
+    id: i32,
+    name: String,
 }
 
 #[service(PoolSqlite)]
