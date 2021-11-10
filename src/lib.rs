@@ -20,18 +20,25 @@ pub enum Operations {
 }
 
 #[allow(dead_code)]
-pub struct Create<T>{data:T}
+pub struct Create<T> {
+    data: T,
+}
 #[allow(dead_code)]
-pub struct Read<T>{data:T}
+pub struct Read<T> {
+    data: T,
+}
 #[allow(dead_code)]
-pub struct Update<T>{data:T}
+pub struct Update<T> {
+    data: T,
+}
 #[allow(dead_code)]
-pub struct Delete<T>{data:T}
+pub struct Delete<T> {
+    data: T,
+}
 
 pub struct ReadAll;
 pub struct UpdateAll;
 pub struct DeleteAll;
-
 
 pub type PoolSqlite = Pool<Sqlite>;
 pub type PoolPostgres = Pool<Postgres>;
