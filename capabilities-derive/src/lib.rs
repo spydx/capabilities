@@ -1,7 +1,6 @@
 #![feature(proc_macro_diagnostic)]
 
 use proc_macro::TokenStream;
-use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::spanned::Spanned;
 use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
@@ -157,34 +156,25 @@ fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
     out.into()
 }
 
-#[allow(dead_code)]
-fn gen_trait() -> TokenStream2 {
-    quote! {
-        #[async_trait]
-        pub trait Capability<Read<String>, Data = Orders, Error = CapServiceError> for CapService {
-            
-        }
-    }
-}
-
-
+/*
+ TODO: Missing IDENTIFIER #[id] for a field of the struct
+ TODO: Missing matching data return for the operations, e.g Delete returns ()
+    while CREATE returns #struct, ReadAll returns Vec<#struct> ...
+*/
 #[proc_macro_attribute]
 pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
-
     let item: Item = parse_macro_input!(annotated_item);
 
     let attr_args: AttributeArgs = parse_macro_input!(args);
 
-
     let s = match item {
-        Item::Struct(ref s) =>
-            Some(s.to_owned()),
+        Item::Struct(ref s) => Some(s.to_owned()),
         _ => {
             item.span()
                 .unstable()
                 .error("We only support structs")
                 .emit();
-                None
+            None
         }
     };
     if s.is_none() {
@@ -192,16 +182,14 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     }
 
     let item_struct = s.unwrap();
-    
+
     let mut caps = vec![];
 
     for t in attr_args {
         let m = match t {
-            NestedMeta::Meta(m) => {
-                match m {
-                    Meta::Path(p) => Some(p),
-                    _ => None,
-                }
+            NestedMeta::Meta(m) => match m {
+                Meta::Path(p) => Some(p),
+                _ => None,
             },
             _ => None,
         };
@@ -211,8 +199,8 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         }
     }
     let mut capidents = vec![];
-    for _cap in &caps {
-        let capident = format_ident!("Can{}{}", _cap.get_ident().unwrap(), item_struct.ident);
+    for cap in &caps {
+        let capident = format_ident!("Can{}{}", cap.get_ident().unwrap(), item_struct.ident);
         capidents.push(capident);
     }
 
@@ -221,41 +209,34 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         #( use ::capabilities::#caps;)*
 
         #item_struct
-        
+
         macro_rules! cap {
             ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
                 #[async_trait]
                 pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
-        
+
                 #[async_trait]
                 impl $name for $type {}
             };
         }
-        #(cap!( #capidents for CapService, composing { #capidents<#struct_id>, #struct_id, CapServiceError}); )* 
+        #(cap!( #capidents for CapService, composing { #caps<#struct_id>, #struct_id, CapServiceError}); )*
     };
     out.into()
 }
 
-
 #[proc_macro_attribute]
 pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    /*
-       1. Implements for the fn
-       3. for fn it implements the trait.
-    */
     let _attr_args: AttributeArgs = parse_macro_input!(args);
     let item: Item = parse_macro_input!(annotated_item);
 
     let s = match item {
-        Item::Fn(ref s) => {
-            Some(s)
-        }
+        Item::Fn(ref s) => Some(s),
         _ => {
             item.span()
                 .unstable()
                 .error("We only support fn for now")
                 .emit();
-                None
+            None
         }
     };
     let ident = &s.unwrap().sig;
