@@ -191,7 +191,7 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         panic!("Cannot continue");
     }
 
-    let ident_struct = s.unwrap();
+    let item_struct = s.unwrap();
     
     let mut caps = vec![];
 
@@ -199,7 +199,7 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         let m = match t {
             NestedMeta::Meta(m) => {
                 match m {
-                    Meta::Path(ident) => Some(ident),
+                    Meta::Path(p) => Some(p),
                     _ => None,
                 }
             },
@@ -211,17 +211,16 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         }
     }
     let mut capidents = vec![];
-    for _identifier in caps {
-        let ident = format_ident!("Can{}{}", "Read", stringify!(_identifier));
-        capidents.push(ident);
+    for _cap in &caps {
+        let capident = format_ident!("Can{}{}", _cap.get_ident().unwrap(), item_struct.ident);
+        capidents.push(capident);
     }
 
-    let canread = format_ident!("Can{}{}", "Read", ident_struct.ident);
-
+    let struct_id = &item_struct.ident;
     let out = quote! {
-        use ::capabilities::Read;
+        #( use ::capabilities::#caps;)*
 
-        #ident_struct
+        #item_struct
         
         macro_rules! cap {
             ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
@@ -232,8 +231,7 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
                 impl $name for $type {}
             };
         }
-
-        cap! (#canread for CapService, composing { Read<String>, #ident_struct.ident, CapServiceError});
+        #(cap!( #capidents for CapService, composing { #capidents<#struct_id>, #struct_id, CapServiceError}); )* 
     };
     out.into()
 }

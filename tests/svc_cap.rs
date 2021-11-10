@@ -4,7 +4,7 @@ use capabilities_derive::capabilities;
 use sqlx::Pool;
 
 
-#[capabilities(Read)]
+#[capabilities(Read, Update)]
 struct Orders {
     id: i32, 
     name: String, 
