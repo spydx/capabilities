@@ -22,7 +22,7 @@ async fn main() -> Result<(), std::io::Error> {
     Ok(())
 }
 
-#[capability(Read, "Orders")]
+#[capability(Read, Orders)]
 fn get_order(order: Orders) -> Result<Order, CapServiceError> {
     Ok(Orders { id: 1, name: "MY order".to_string(),})
 }

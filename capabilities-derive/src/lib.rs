@@ -255,7 +255,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     };
 
     let arg_struct = match arg_struct {
-        NestedMeta::Lit(l) => Some(l),
+        NestedMeta::Meta(m) => Some(m),
         _ => {
                 arg_capability.span()
                 .unstable()
@@ -265,38 +265,33 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         }
     };
 
-
-    
     let fn_signature = &s.unwrap().sig.ident;
     // can only hold one param
     let _fn_attrs = &s.unwrap().attrs;
     let fn_block = &s.unwrap().block;
-    let item_struct = &arg_struct.unwrap();
-    let item_cap = &arg_capability.unwrap();
-    let capability = format_ident!("Can{}{}", item_cap.path().get_ident().unwrap(), "Orders");
-    //eprintln!("{:?}", fn_signature);s
-    eprintln!("{:?}", item_struct);
+    let item_struct = &arg_struct.unwrap().path().get_ident().unwrap().clone();
+    let item_cap = &arg_capability.unwrap().path().get_ident().unwrap().clone();
+    let capability = format_ident!("Can{}{}", item_cap, item_struct);
+    //eprintln!("{:?}", fn_signature);
     
     let out = quote! {
         
-        pub async fn #fn_signature<Service>(service: &Service, param: Orders ) -> Result<Orders, CapServiceError> 
+        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct ) -> Result<#item_struct, CapServiceError> 
         where
             Service: #capability,
         {
-            service.perform(::capabilities::Read { data: param }).await
+            service.perform(::capabilities::#item_cap { data: param }).await
         }
 
         #[async_trait]
-        impl Capability<Read<Orders>> for CapService {
-            type Data = Orders;
+        impl Capability<#item_cap<#item_struct>> for CapService {
+            type Data = #item_struct;
             type Error = CapServiceError;
 
-            async fn perform(&self, find_user: Read<Orders>) -> Result<Self::Data, Self::Error> {
+            async fn perform(&self, find_user: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
                 #fn_block
             }
         }
-
-
     };
     out.into()
 }
