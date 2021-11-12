@@ -71,8 +71,6 @@ pub fn main() -> () {
 }
 ```
 
-
-
 ## Testing with TryBuild
 
 Every time we create a new test that has WIP output, we should verify that this is the output.
@@ -92,7 +90,6 @@ test service_struct.rs [should fail to compile] ... ok
 
 ... <other tests>
 ```
-
 
 ## Sources
 
