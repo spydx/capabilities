@@ -226,7 +226,7 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
 
 #[proc_macro_attribute]
 pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    let _attr_args: AttributeArgs = parse_macro_input!(args);
+    let mut attr_args: AttributeArgs = parse_macro_input!(args);
     let item: Item = parse_macro_input!(annotated_item);
 
     let s = match item {
@@ -239,24 +239,60 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
             None
         }
     };
-    let ident = &s.unwrap().sig;
 
-    eprintln!("{:?}", ident);
+    let arg_struct = attr_args.pop().unwrap();
+    let arg_capability = attr_args.pop().unwrap();
 
+    let arg_capability = match arg_capability {
+        NestedMeta::Meta(m) => Some(m),
+        _ => {
+                arg_capability.span()
+                .unstable()
+                .error("Not a capability we support")
+                .emit();
+                None  
+        }
+    };
+
+    let arg_struct = match arg_struct {
+        NestedMeta::Lit(l) => Some(l),
+        _ => {
+                arg_capability.span()
+                .unstable()
+                .error("This should be a struct")
+                .emit();
+                None  
+        }
+    };
+
+
+    
+    let fn_signature = &s.unwrap().sig.ident;
+    // can only hold one param
+    let _fn_attrs = &s.unwrap().attrs;
+    let fn_block = &s.unwrap().block;
+    let item_struct = &arg_struct.unwrap();
+    let item_cap = &arg_capability.unwrap();
+    let capability = format_ident!("Can{}{}", item_cap.path().get_ident().unwrap(), "Orders");
+    //eprintln!("{:?}", fn_signature);s
+    eprintln!("{:?}", item_struct);
+    
     let out = quote! {
-        #item
-        use async_trait::async_trait;
-        pub struct User;
-
-        pub struct Read<T>(T);
+        
+        pub async fn #fn_signature<Service>(service: &Service, param: Orders ) -> Result<Orders, CapServiceError> 
+        where
+            Service: #capability,
+        {
+            service.perform(::capabilities::Read { data: param }).await
+        }
 
         #[async_trait]
-        impl Capability<Read<String>> for #ident {
-            type Data = User;
-            type Error = DatabaseError;
+        impl Capability<Read<Orders>> for CapService {
+            type Data = Orders;
+            type Error = CapServiceError;
 
-            async fn perform(&self, find_user: Read<String>) -> Result<Self::Data, Self::Error> {
-                Ok(User)
+            async fn perform(&self, find_user: Read<Orders>) -> Result<Self::Data, Self::Error> {
+                #fn_block
             }
         }
 

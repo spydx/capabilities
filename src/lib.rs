@@ -21,19 +21,19 @@ pub enum Operations {
 
 #[allow(dead_code)]
 pub struct Create<T> {
-    data: T,
+    pub data: T,
 }
 #[allow(dead_code)]
 pub struct Read<T> {
-    data: T,
+    pub data: T,
 }
 #[allow(dead_code)]
 pub struct Update<T> {
-    data: T,
+    pub data: T,
 }
 #[allow(dead_code)]
 pub struct Delete<T> {
-    data: T,
+    pub data: T,
 }
 
 pub struct ReadAll;
