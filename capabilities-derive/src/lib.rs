@@ -5,6 +5,12 @@ use quote::{format_ident, quote};
 use syn::spanned::Spanned;
 use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
 
+
+const POOL_SQLITE: &str = "PoolSqlite";
+const POOL_POSTGRES: &str = "PoolPostgres";
+const WEB_SERVICE: &str = "WebService";
+const CAP_PREFIX: &str = "Cap";
+
 #[proc_macro_attribute]
 pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let item: Item = parse_macro_input!(annotated_item);
@@ -33,9 +39,9 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
             let allowed_type = match nm.clone() {
                 Meta::Path(type_ident) => {
                     let t = match type_ident.get_ident().unwrap().to_string().as_str() {
-                        "PoolSqlite" => Some(nm),
-                        "PoolPostgres" => Some(nm),
-                        "WebService" => Some(nm),
+                        POOL_SQLITE => Some(nm),
+                        POOL_POSTGRES => Some(nm),
+                        WEB_SERVICE => Some(nm),
                         _ => {
                             nm.span()
                                 .unstable()
@@ -80,9 +86,9 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         .to_string()
         .as_str()
     {
-        "PoolSqlite" => Some(impl_code_database(service_token, item)),
-        "PoolPostgres" => Some(impl_code_database(service_token, item)),
-        "WebService" => Some(impl_code_webservice(service_token, item)),
+        POOL_SQLITE => Some(impl_code_database(service_token, item)),
+        POOL_POSTGRES=> Some(impl_code_database(service_token, item)),
+        WEB_SERVICE => Some(impl_code_webservice(service_token, item)),
         _ => {
             service_token
                 .span()
@@ -200,7 +206,7 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     }
     let mut capidents = vec![];
     for cap in &caps {
-        let capident = format_ident!("Can{}{}", cap.get_ident().unwrap(), item_struct.ident);
+        let capident = format_ident!("{}{}{}",CAP_PREFIX, cap.get_ident().unwrap(), item_struct.ident);
         capidents.push(capident);
     }
 
@@ -271,7 +277,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     let fn_block = &s.unwrap().block;
     let item_struct = &arg_struct.unwrap().path().get_ident().unwrap().clone();
     let item_cap = &arg_capability.unwrap().path().get_ident().unwrap().clone();
-    let capability = format_ident!("Can{}{}", item_cap, item_struct);
+    let capability = format_ident!("{}{}{}",CAP_PREFIX,item_cap, item_struct);
     //eprintln!("{:?}", fn_signature);
     
     let out = quote! {

@@ -16,16 +16,16 @@ name = "tests"
 path = "tests/cap_tests.rs"
 
 [dependencies]
-quote = "1.0.9"
-syn = { version = "1.0.78", features = ["full"] }
-proc-macro2 = "1.0"
+quote = "1.0.10"
+syn = { version = "1.0.82", features = ["full"] }
+proc-macro2 = "1.0.32"
 async-trait = "0.1.51"
 reqwest = "0.11.6"
 sqlx = { version = "0.5.9", features = ["migrate","runtime-actix-rustls","offline","macros", "sqlite", "postgres"] }
 
 [dev-dependencies]
-tokio = { version = "1.11.0", features = ["full"] }
-trybuild = "1.0.46"
+tokio = { version = "1.14.0", features = ["full"] }
+trybuild = "1.0.52"
 
 [dependencies.capabilities-derive]
 version = "0.1.0"

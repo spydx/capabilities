@@ -1,0 +1,18 @@
+error[E0277]: the trait bound `Database: Capability<Read<String>>` is not satisfied
+  --> tests/fail/cap.rs:32:6
+   |
+32 | cap!(CanReadOrders for Database, composing { Read<String>, Orders, DatabaseError} );
+   |      ^^^^^^^^^^^^^ the trait `Capability<Read<String>>` is not implemented for `Database`
+   |
+note: required by a bound in `CanReadOrders`
+  --> tests/fail/cap.rs:14:28
+   |
+14 |         pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `CanReadOrders`
+...
+32 | cap!(CanReadOrders for Database, composing { Read<String>, Orders, DatabaseError} );
+   | -----------------------------------------------------------------------------------
+   | |    |
+   | |    required by a bound in this
+   | in this macro invocation
+   = note: this error originates in the macro `cap` (in Nightly builds, run with -Z macro-backtrace for more info)
