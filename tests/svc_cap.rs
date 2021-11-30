@@ -12,6 +12,7 @@ pub struct Orders {
     name: String,
 }
 
+// name for db field
 #[service(PoolSqlite)]
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -23,6 +24,6 @@ async fn main() -> Result<(), std::io::Error> {
 }
 
 #[capability(Read, Orders)]
-fn get_order(order: Orders) -> Result<Order, CapServiceError> {
+fn get_order(order_id: i32) -> Result<Order, CapServiceError> {
     Ok(Orders { id: 1, name: "MY order".to_string(),})
 }
