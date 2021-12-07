@@ -4,10 +4,10 @@ use capabilities_derive::capability;
 use capabilities_derive::service;
 use sqlx::Pool;
 
-#[capabilities(Read)]
+#[capabilities(Read, id = "kenneth")]
 pub struct Orders {
     #[allow(dead_code)]
-    id: i32,
+    kenneth: i32,
     #[allow(dead_code)]
     name: String,
 }

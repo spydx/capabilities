@@ -2,8 +2,10 @@
 
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
+
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
+use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta, MetaNameValue};
+use syn::{Lit, ItemStruct, Type};
 
 
 const POOL_SQLITE: &str = "PoolSqlite";
@@ -11,6 +13,14 @@ const POOL_POSTGRES: &str = "PoolPostgres";
 const WEB_SERVICE: &str = "WebService";
 const CAP_PREFIX: &str = "Cap";
 
+#[allow(dead_code)]
+const FIELD_NAME: &str = "con";
+
+
+/* 
+    TODO: Missing naming of default field for the service struct.
+    Now it is named "con" and should be user customizable for better readability
+*/
 #[proc_macro_attribute]
 pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let item: Item = parse_macro_input!(annotated_item);
@@ -18,6 +28,8 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
 
     let service = input_args.first().cloned();
 
+    //TODO: expand to more arguments, 
+    // must be 1 or 2,and the first is a MetaList and the second one is NamedValue
     if input_args.len() > 1 {
         service
             .span()
@@ -52,7 +64,7 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
                     };
 
                     t
-                }
+                },
                 _ => {
                     let ident = nm.path().get_ident().unwrap().to_string();
                     nm.span()
@@ -78,7 +90,7 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         }
     };
     let service_token = service_type.unwrap().unwrap();
-
+   
     let out = match service_token
         .path()
         .get_ident()
@@ -167,10 +179,10 @@ fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
  TODO: Missing matching data return for the operations, e.g Delete returns ()
     while CREATE returns #struct, ReadAll returns Vec<#struct> ...
 */
+
 #[proc_macro_attribute]
 pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let item: Item = parse_macro_input!(annotated_item);
-
     let attr_args: AttributeArgs = parse_macro_input!(args);
 
     let s = match item {
@@ -190,8 +202,7 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     let item_struct = s.unwrap();
 
     let mut caps = vec![];
-
-    for t in attr_args {
+    for t in &attr_args {
         let m = match t {
             NestedMeta::Meta(m) => match m {
                 Meta::Path(p) => Some(p),
@@ -210,10 +221,16 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         capidents.push(capident);
     }
 
+    let id_metavalue= parse_args_for_id_field(&attr_args);
+    // this field needs to be dynamically assigned to different stuff.
+    let _id_type = parse_metavalue_for_type(&id_metavalue, &item_struct);
+    
+    
     let struct_id = &item_struct.ident;
+    
     let out = quote! {
         #( use ::capabilities::#caps;)*
-
+    
         #item_struct
 
         macro_rules! cap {
@@ -230,11 +247,74 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     out.into()
 }
 
+
+fn parse_metavalue_for_type(id_metavalue: &MetaNameValue, item_struct: &ItemStruct) -> Type {
+    
+    let mut id_type = vec![];
+
+    let id_field_name = match &id_metavalue.lit {
+        Lit::Str(a) => Some(a.value()),
+        _ => None,
+    };
+    let ident_fieldname = format_ident!("{}", &id_field_name.unwrap());
+    
+    
+    //eprintln!("{:?}", item_struct.fields);
+    for f in &item_struct.fields {
+        let ident = f.ident.as_ref().unwrap();
+        if ident.eq(&ident_fieldname) {
+            id_type.push(f.to_owned().ty);
+        }
+    }
+    let val = id_type.pop().unwrap();
+    val
+}
+fn parse_args_for_id_field(attr_args: &Vec<NestedMeta>) -> MetaNameValue {
+    let mut id_vec = vec![];
+    for i in attr_args {
+        let m = match i {
+            NestedMeta::Meta(m) => match m {
+                Meta::NameValue(nv) => Some(nv),
+                _ => None,
+            },
+            _ => None,
+        };
+        if m.is_some() {
+            let val = m.unwrap();
+            id_vec.push(val);
+        }
+        
+    };
+    let val = id_vec.pop().unwrap().to_owned();
+    val
+}
+
+fn parse_name_for_struct_field(attr_args: &Vec<NestedMeta>) -> MetaNameValue {
+    let mut id_vec = vec![];
+    for i in attr_args {
+        let m = match i {
+            NestedMeta::Meta(m) => match m {
+                Meta::NameValue(nv) => Some(nv),
+                _ => None,
+            },
+            _ => None,
+        };
+        if m.is_some() {
+            let val = m.unwrap();
+            id_vec.push(val);
+        }
+        
+    };
+    let val = id_vec.pop().unwrap().to_owned();
+    val
+}
+
+
 #[proc_macro_attribute]
 pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let mut attr_args: AttributeArgs = parse_macro_input!(args);
     let item: Item = parse_macro_input!(annotated_item);
-
+   
     let s = match item {
         Item::Fn(ref s) => Some(s),
         _ => {
