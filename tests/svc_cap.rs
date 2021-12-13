@@ -4,10 +4,10 @@ use capabilities_derive::capability;
 use capabilities_derive::service;
 use sqlx::Pool;
 
-#[capabilities(Read, id = "kenneth")]
+#[capabilities(Read, id = "id")]
 pub struct Orders {
     #[allow(dead_code)]
-    kenneth: i32,
+    id: i32,
     #[allow(dead_code)]
     name: String,
 }
@@ -24,6 +24,6 @@ async fn main() -> Result<(), std::io::Error> {
 }
 
 #[capability(Read, Orders)]
-fn get_order(order_id: i32) -> Result<Order, CapServiceError> {
+fn get_order(order_id: i32) -> Result<Orders, CapServiceError> {
     Ok(Orders { id: 1, name: "MY order".to_string(),})
 }

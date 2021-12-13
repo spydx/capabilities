@@ -1,12 +1,12 @@
 #![feature(proc_macro_diagnostic)]
+#![feature(let_else)]
 
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 
 use syn::spanned::Spanned;
 use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta, MetaNameValue};
-use syn::{Lit, ItemStruct, Type};
-
+use syn::{Lit, ItemStruct, Type, Ident};
 
 const POOL_SQLITE: &str = "PoolSqlite";
 const POOL_POSTGRES: &str = "PoolPostgres";
@@ -15,7 +15,6 @@ const CAP_PREFIX: &str = "Cap";
 
 #[allow(dead_code)]
 const FIELD_NAME: &str = "con";
-
 
 /* 
     TODO: Missing naming of default field for the service struct.
@@ -90,7 +89,8 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         }
     };
     let service_token = service_type.unwrap().unwrap();
-   
+    let _service_field = parse_name_for_service_field(&input_args);
+    //eprintln!("Service Field: {:?}", _service_field);
     let out = match service_token
         .path()
         .get_ident()
@@ -222,33 +222,185 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     }
 
     let id_metavalue= parse_args_for_id_field(&attr_args);
-    // this field needs to be dynamically assigned to different stuff.
-    let _id_type = parse_metavalue_for_type(&id_metavalue, &item_struct);
-    
-    
+        // this field needs to be dynamically assigned to different stuff.
+
     let struct_id = &item_struct.ident;
-    
-    let out = quote! {
-        #( use ::capabilities::#caps;)*
-    
+    let _id_type = parse_metavalue_for_type(&id_metavalue.clone().unwrap(), &item_struct);
+    let generated_caps = generate_caps(&capidents, _id_type.clone(), &struct_id);
+
+    quote! {
         #item_struct
-
+        #( use ::capabilities::#caps;)*
+        #generated_caps
+    }.into()
+    /*
+    if id_metavalue.is_some() {
+       
+        let out = quote! {
+            macro_rules! cap {
+                ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
+                    #[async_trait]
+                    pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+    
+                    #[async_trait]
+                    impl $name for $type {}
+                };
+            }
+        
+            #item_struct
+        
+            #( use ::capabilities::#caps;)*
+            #(cap!( #capidents for CapService, composing { #caps<#_id_type>, #struct_id, CapServiceError}); )*
+        };
+        out.into()
+    } else {
+        let out = quote! {
+            macro_rules! cap {
+                ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
+                    #[async_trait]
+                    pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+    
+                    #[async_trait]
+                    impl $name for $type {}
+                };
+            }
+        
+            #item_struct
+            
+            #( use ::capabilities::#caps;)*
+            #(cap!( #capidents for CapService, composing { #caps<#struct_id>, #struct_id, CapServiceError}); )*
+        };
+        out.into()
+    }*/
+}
+fn get_cap_macro() -> proc_macro2::TokenStream {
+    quote! { 
         macro_rules! cap {
-            ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
-                #[async_trait]
-                pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
+            #[async_trait]
+            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
 
-                #[async_trait]
-                impl $name for $type {}
-            };
-        }
-        #(cap!( #capidents for CapService, composing { #caps<#struct_id>, #struct_id, CapServiceError}); )*
-    };
-    out.into()
+            #[async_trait]
+            impl $name for $type {}
+        };
+    }}
 }
 
+fn generate_caps(capabilities: &Vec<Ident>, id_type: Option<Type>, struct_name: &Ident) -> proc_macro2::TokenStream {
+    
+    let create = format_ident!("{}{}", "CapCreate", struct_name).to_string();
+    let read = format_ident!("{}{}", "CapRead", struct_name).to_string();
+    let update = format_ident!("{}{}", "CapUpdate", struct_name).to_string();
+    let delete = format_ident!("{}{}", "CapDelete", struct_name).to_string();
 
-fn parse_metavalue_for_type(id_metavalue: &MetaNameValue, item_struct: &ItemStruct) -> Type {
+    // create a vector and then flatten with repetition in quote!
+    // use match to create the different out TokenStreams 
+    let mut tokens = vec![];
+
+    for cap in capabilities {
+
+        let outtokens = 
+        if cap.to_string().eq(&create) {
+            Some(quote! {
+                macro_rules! cap {
+                    ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
+                        #[async_trait]
+                        pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+            
+                        #[async_trait]
+                        impl $name for $type {}
+                    };
+                }
+                cap!( #cap for CapService, composing { Create<#struct_name>, #struct_name, CapServiceError});
+            })
+        } else if cap.to_string().eq(&read) {
+            if id_type.is_some() {
+                Some(quote! {
+                    macro_rules! cap {
+                        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
+                            #[async_trait]
+                            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+                
+                            #[async_trait]
+                            impl $name for $type {}
+                        };
+                    }
+                    cap!( #cap for CapService, composing { Read<#id_type>, #struct_name, CapServiceError}); 
+                })
+            } else if id_type.is_none() {
+               Some(quote! {
+                    macro_rules! cap {
+                        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
+                            #[async_trait]
+                            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+                
+                            #[async_trait]
+                            impl $name for $type {}
+                        };
+                    }
+                    cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
+                })
+            } else {
+                None
+            }
+        } else if cap.to_string().eq(&update) {
+            if id_type.is_some() {
+                Some(quote! {
+                    macro_rules! cap {
+                        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
+                            #[async_trait]
+                            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+                
+                            #[async_trait]
+                            impl $name for $type {}
+                        };
+                    }
+                    cap!( #cap for CapService, composing { Update<#id_type>, #struct_name, CapServiceError}); 
+                })
+            } else if id_type.is_none() {
+               Some(quote! {
+                    macro_rules! cap {
+                        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
+                            #[async_trait]
+                            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+                
+                            #[async_trait]
+                            impl $name for $type {}
+                        };
+                    }
+                    cap!( #cap for CapService, composing { Update<#struct_name>, #struct_name, CapServiceError});
+                })
+            } else {
+                None
+            }
+        } else if cap.to_string().eq(&delete) {
+            Some(quote! {
+                macro_rules! cap {
+                    ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
+                        #[async_trait]
+                        pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+            
+                        #[async_trait]
+                        impl $name for $type {}
+                    };
+                }
+                cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
+            })
+        } else {
+            None
+        };
+        if outtokens.is_some() {
+            let t = outtokens.unwrap();
+            tokens.push(t);
+        }
+    }
+
+    quote! {
+        #( #tokens )*
+    }
+}
+
+fn parse_metavalue_for_type(id_metavalue: &MetaNameValue, item_struct: &ItemStruct) -> Option<Type> {
     
     let mut id_type = vec![];
 
@@ -256,20 +408,21 @@ fn parse_metavalue_for_type(id_metavalue: &MetaNameValue, item_struct: &ItemStru
         Lit::Str(a) => Some(a.value()),
         _ => None,
     };
-    let ident_fieldname = format_ident!("{}", &id_field_name.unwrap());
-    
-    
-    //eprintln!("{:?}", item_struct.fields);
-    for f in &item_struct.fields {
-        let ident = f.ident.as_ref().unwrap();
-        if ident.eq(&ident_fieldname) {
-            id_type.push(f.to_owned().ty);
+    if id_field_name.is_some() {
+        let ident_fieldname = format_ident!("{}", &id_field_name.unwrap());
+        for f in &item_struct.fields {
+            let ident = f.ident.as_ref().unwrap();
+            if ident.eq(&ident_fieldname) {
+                id_type.push(f.to_owned().ty);
+            }
         }
+        let val = id_type.pop().unwrap();
+        Some(val)
+    } else {
+        None
     }
-    let val = id_type.pop().unwrap();
-    val
 }
-fn parse_args_for_id_field(attr_args: &Vec<NestedMeta>) -> MetaNameValue {
+fn parse_args_for_id_field(attr_args: &Vec<NestedMeta>) -> Option<MetaNameValue> {
     let mut id_vec = vec![];
     for i in attr_args {
         let m = match i {
@@ -285,11 +438,15 @@ fn parse_args_for_id_field(attr_args: &Vec<NestedMeta>) -> MetaNameValue {
         }
         
     };
-    let val = id_vec.pop().unwrap().to_owned();
-    val
+    if id_vec.is_empty() {
+        None
+    } else {
+        let val = id_vec.pop().unwrap().to_owned();
+        Some(val)
+    }
 }
 
-fn parse_name_for_struct_field(attr_args: &Vec<NestedMeta>) -> MetaNameValue {
+fn parse_name_for_service_field(attr_args: &Vec<NestedMeta>) -> Option<MetaNameValue> {
     let mut id_vec = vec![];
     for i in attr_args {
         let m = match i {
@@ -303,10 +460,13 @@ fn parse_name_for_struct_field(attr_args: &Vec<NestedMeta>) -> MetaNameValue {
             let val = m.unwrap();
             id_vec.push(val);
         }
-        
     };
-    let val = id_vec.pop().unwrap().to_owned();
-    val
+    if id_vec.is_empty() {
+        None
+    } else {
+        let val = id_vec.pop().unwrap().to_owned();
+        Some(val)
+    }
 }
 
 
@@ -355,10 +515,10 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     // can only hold one param
     let _fn_attrs = &s.unwrap().attrs;
     let fn_block = &s.unwrap().block;
+
     let item_struct = &arg_struct.unwrap().path().get_ident().unwrap().clone();
     let item_cap = &arg_capability.unwrap().path().get_ident().unwrap().clone();
     let capability = format_ident!("{}{}{}",CAP_PREFIX,item_cap, item_struct);
-    //eprintln!("{:?}", fn_signature);
     
     let out = quote! {
         
