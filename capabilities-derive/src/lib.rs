@@ -233,45 +233,6 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         #( use ::capabilities::#caps;)*
         #generated_caps
     }.into()
-    /*
-    if id_metavalue.is_some() {
-       
-        let out = quote! {
-            macro_rules! cap {
-                ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
-                    #[async_trait]
-                    pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
-    
-                    #[async_trait]
-                    impl $name for $type {}
-                };
-            }
-        
-            #item_struct
-        
-            #( use ::capabilities::#caps;)*
-            #(cap!( #capidents for CapService, composing { #caps<#_id_type>, #struct_id, CapServiceError}); )*
-        };
-        out.into()
-    } else {
-        let out = quote! {
-            macro_rules! cap {
-                ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
-                    #[async_trait]
-                    pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
-    
-                    #[async_trait]
-                    impl $name for $type {}
-                };
-            }
-        
-            #item_struct
-            
-            #( use ::capabilities::#caps;)*
-            #(cap!( #capidents for CapService, composing { #caps<#struct_id>, #struct_id, CapServiceError}); )*
-        };
-        out.into()
-    }*/
 }
 fn get_cap_macro() -> proc_macro2::TokenStream {
     quote! { 
@@ -296,48 +257,24 @@ fn generate_caps(capabilities: &Vec<Ident>, id_type: Option<Type>, struct_name: 
     // create a vector and then flatten with repetition in quote!
     // use match to create the different out TokenStreams 
     let mut tokens = vec![];
-
+    let capmacro = get_cap_macro();
     for cap in capabilities {
 
         let outtokens = 
         if cap.to_string().eq(&create) {
             Some(quote! {
-                macro_rules! cap {
-                    ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
-                        #[async_trait]
-                        pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
-            
-                        #[async_trait]
-                        impl $name for $type {}
-                    };
-                }
+                #capmacro
                 cap!( #cap for CapService, composing { Create<#struct_name>, #struct_name, CapServiceError});
             })
         } else if cap.to_string().eq(&read) {
             if id_type.is_some() {
                 Some(quote! {
-                    macro_rules! cap {
-                        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
-                            #[async_trait]
-                            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
-                
-                            #[async_trait]
-                            impl $name for $type {}
-                        };
-                    }
+                    #capmacro
                     cap!( #cap for CapService, composing { Read<#id_type>, #struct_name, CapServiceError}); 
                 })
             } else if id_type.is_none() {
                Some(quote! {
-                    macro_rules! cap {
-                        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
-                            #[async_trait]
-                            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
-                
-                            #[async_trait]
-                            impl $name for $type {}
-                        };
-                    }
+                   #capmacro
                     cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
                 })
             } else {
@@ -346,28 +283,12 @@ fn generate_caps(capabilities: &Vec<Ident>, id_type: Option<Type>, struct_name: 
         } else if cap.to_string().eq(&update) {
             if id_type.is_some() {
                 Some(quote! {
-                    macro_rules! cap {
-                        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
-                            #[async_trait]
-                            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
-                
-                            #[async_trait]
-                            impl $name for $type {}
-                        };
-                    }
+                    #capmacro
                     cap!( #cap for CapService, composing { Update<#id_type>, #struct_name, CapServiceError}); 
                 })
             } else if id_type.is_none() {
                Some(quote! {
-                    macro_rules! cap {
-                        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
-                            #[async_trait]
-                            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
-                
-                            #[async_trait]
-                            impl $name for $type {}
-                        };
-                    }
+                    #capmacro
                     cap!( #cap for CapService, composing { Update<#struct_name>, #struct_name, CapServiceError});
                 })
             } else {
@@ -375,15 +296,7 @@ fn generate_caps(capabilities: &Vec<Ident>, id_type: Option<Type>, struct_name: 
             }
         } else if cap.to_string().eq(&delete) {
             Some(quote! {
-                macro_rules! cap {
-                    ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
-                        #[async_trait]
-                        pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
-            
-                        #[async_trait]
-                        impl $name for $type {}
-                    };
-                }
+                #capmacro
                 cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
             })
         } else {
