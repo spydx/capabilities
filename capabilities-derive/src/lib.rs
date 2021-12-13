@@ -1,5 +1,4 @@
 #![feature(proc_macro_diagnostic)]
-#![feature(let_else)]
 
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
