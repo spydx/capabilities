@@ -5,8 +5,8 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta, MetaNameValue};
-use syn::{Lit, ItemStruct, Type, Ident};
+use syn::{parse_macro_input, AttributeArgs, Item, Meta, MetaNameValue, NestedMeta};
+use syn::{Ident, ItemStruct, Lit, Type};
 
 const POOL_SQLITE: &str = "PoolSqlite";
 const POOL_POSTGRES: &str = "PoolPostgres";
@@ -16,7 +16,7 @@ const CAP_PREFIX: &str = "Cap";
 #[allow(dead_code)]
 const FIELD_NAME: &str = "con";
 
-/* 
+/*
     TODO: Missing naming of default field for the service struct.
     Now it is named "con" and should be user customizable for better readability
 */
@@ -27,7 +27,7 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
 
     let service = input_args.first().cloned();
 
-    //TODO: expand to more arguments, 
+    //TODO: expand to more arguments,
     // must be 1 or 2,and the first is a MetaList and the second one is NamedValue
     if input_args.len() > 1 {
         service
@@ -63,7 +63,7 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
                     };
 
                     t
-                },
+                }
                 _ => {
                     let ident = nm.path().get_ident().unwrap().to_string();
                     nm.span()
@@ -99,7 +99,7 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         .as_str()
     {
         POOL_SQLITE => Some(impl_code_database(service_token, item)),
-        POOL_POSTGRES=> Some(impl_code_database(service_token, item)),
+        POOL_POSTGRES => Some(impl_code_database(service_token, item)),
         WEB_SERVICE => Some(impl_code_webservice(service_token, item)),
         _ => {
             service_token
@@ -217,12 +217,17 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     }
     let mut capidents = vec![];
     for cap in &caps {
-        let capident = format_ident!("{}{}{}",CAP_PREFIX, cap.get_ident().unwrap(), item_struct.ident);
+        let capident = format_ident!(
+            "{}{}{}",
+            CAP_PREFIX,
+            cap.get_ident().unwrap(),
+            item_struct.ident
+        );
         capidents.push(capident);
     }
 
-    let id_metavalue= parse_args_for_id_field(&attr_args);
-        // this field needs to be dynamically assigned to different stuff.
+    let id_metavalue = parse_args_for_id_field(&attr_args);
+    // this field needs to be dynamically assigned to different stuff.
 
     let struct_id = &item_struct.ident;
     let _id_type = parse_metavalue_for_type(&id_metavalue.clone().unwrap(), &item_struct);
@@ -232,10 +237,11 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         #item_struct
         #( use ::capabilities::#caps;)*
         #generated_caps
-    }.into()
+    }
+    .into()
 }
 fn get_cap_macro() -> proc_macro2::TokenStream {
-    quote! { 
+    quote! {
         macro_rules! cap {
         ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
             #[async_trait]
@@ -247,21 +253,22 @@ fn get_cap_macro() -> proc_macro2::TokenStream {
     }}
 }
 
-fn generate_caps(capabilities: &Vec<Ident>, id_type: Option<Type>, struct_name: &Ident) -> proc_macro2::TokenStream {
-    
+fn generate_caps(
+    capabilities: &Vec<Ident>,
+    id_type: Option<Type>,
+    struct_name: &Ident,
+) -> proc_macro2::TokenStream {
     let create = format_ident!("{}{}", "CapCreate", struct_name).to_string();
     let read = format_ident!("{}{}", "CapRead", struct_name).to_string();
     let update = format_ident!("{}{}", "CapUpdate", struct_name).to_string();
     let delete = format_ident!("{}{}", "CapDelete", struct_name).to_string();
 
     // create a vector and then flatten with repetition in quote!
-    // use match to create the different out TokenStreams 
+    // use match to create the different out TokenStreams
     let mut tokens = vec![];
     let capmacro = get_cap_macro();
     for cap in capabilities {
-
-        let outtokens = 
-        if cap.to_string().eq(&create) {
+        let outtokens = if cap.to_string().eq(&create) {
             Some(quote! {
                 #capmacro
                 cap!( #cap for CapService, composing { Create<#struct_name>, #struct_name, CapServiceError});
@@ -270,10 +277,10 @@ fn generate_caps(capabilities: &Vec<Ident>, id_type: Option<Type>, struct_name: 
             if id_type.is_some() {
                 Some(quote! {
                     #capmacro
-                    cap!( #cap for CapService, composing { Read<#id_type>, #struct_name, CapServiceError}); 
+                    cap!( #cap for CapService, composing { Read<#id_type>, #struct_name, CapServiceError});
                 })
             } else if id_type.is_none() {
-               Some(quote! {
+                Some(quote! {
                    #capmacro
                     cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
                 })
@@ -284,10 +291,10 @@ fn generate_caps(capabilities: &Vec<Ident>, id_type: Option<Type>, struct_name: 
             if id_type.is_some() {
                 Some(quote! {
                     #capmacro
-                    cap!( #cap for CapService, composing { Update<#id_type>, #struct_name, CapServiceError}); 
+                    cap!( #cap for CapService, composing { Update<#id_type>, #struct_name, CapServiceError});
                 })
             } else if id_type.is_none() {
-               Some(quote! {
+                Some(quote! {
                     #capmacro
                     cap!( #cap for CapService, composing { Update<#struct_name>, #struct_name, CapServiceError});
                 })
@@ -313,8 +320,10 @@ fn generate_caps(capabilities: &Vec<Ident>, id_type: Option<Type>, struct_name: 
     }
 }
 
-fn parse_metavalue_for_type(id_metavalue: &MetaNameValue, item_struct: &ItemStruct) -> Option<Type> {
-    
+fn parse_metavalue_for_type(
+    id_metavalue: &MetaNameValue,
+    item_struct: &ItemStruct,
+) -> Option<Type> {
     let mut id_type = vec![];
 
     let id_field_name = match &id_metavalue.lit {
@@ -349,8 +358,7 @@ fn parse_args_for_id_field(attr_args: &Vec<NestedMeta>) -> Option<MetaNameValue>
             let val = m.unwrap();
             id_vec.push(val);
         }
-        
-    };
+    }
     if id_vec.is_empty() {
         None
     } else {
@@ -373,7 +381,7 @@ fn parse_name_for_service_field(attr_args: &Vec<NestedMeta>) -> Option<MetaNameV
             let val = m.unwrap();
             id_vec.push(val);
         }
-    };
+    }
     if id_vec.is_empty() {
         None
     } else {
@@ -382,12 +390,11 @@ fn parse_name_for_service_field(attr_args: &Vec<NestedMeta>) -> Option<MetaNameV
     }
 }
 
-
 #[proc_macro_attribute]
 pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let mut attr_args: AttributeArgs = parse_macro_input!(args);
     let item: Item = parse_macro_input!(annotated_item);
-   
+
     let s = match item {
         Item::Fn(ref s) => Some(s),
         _ => {
@@ -405,22 +412,24 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     let arg_capability = match arg_capability {
         NestedMeta::Meta(m) => Some(m),
         _ => {
-                arg_capability.span()
+            arg_capability
+                .span()
                 .unstable()
                 .error("Not a capability we support")
                 .emit();
-                None  
+            None
         }
     };
 
     let arg_struct = match arg_struct {
         NestedMeta::Meta(m) => Some(m),
         _ => {
-                arg_capability.span()
+            arg_capability
+                .span()
                 .unstable()
                 .error("This should be a struct")
                 .emit();
-                None  
+            None
         }
     };
 
@@ -431,11 +440,11 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
 
     let item_struct = &arg_struct.unwrap().path().get_ident().unwrap().clone();
     let item_cap = &arg_capability.unwrap().path().get_ident().unwrap().clone();
-    let capability = format_ident!("{}{}{}",CAP_PREFIX,item_cap, item_struct);
-    
+    let capability = format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct);
+
     let out = quote! {
-        
-        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct ) -> Result<#item_struct, CapServiceError> 
+
+        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct ) -> Result<#item_struct, CapServiceError>
         where
             Service: #capability,
         {
