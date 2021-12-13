@@ -1,5 +1,7 @@
 #![feature(proc_macro_diagnostic)]
+mod helpers;
 
+use helpers::{get_id_identifier, get_name_identifier, get_cap_macro};
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 
@@ -89,7 +91,6 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     };
     let service_token = service_type.unwrap().unwrap();
     let _service_field = parse_name_for_service_field(&input_args);
-    //eprintln!("Service Field: {:?}", _service_field);
     let out = match service_token
         .path()
         .get_ident()
@@ -229,7 +230,8 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     // this field needs to be dynamically assigned to different stuff.
 
     let struct_id = &item_struct.ident;
-    let _id_type = parse_metavalue_for_type(&id_metavalue.clone().unwrap(), &item_struct);
+    let _id_type = parse_metavalue_for_type(&id_metavalue.clone(), &item_struct);
+    
     let generated_caps = generate_caps(&capidents, _id_type.clone(), &struct_id);
 
     quote! {
@@ -239,18 +241,7 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     }
     .into()
 }
-fn get_cap_macro() -> proc_macro2::TokenStream {
-    quote! {
-        macro_rules! cap {
-        ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
-            #[async_trait]
-            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
 
-            #[async_trait]
-            impl $name for $type {}
-        };
-    }}
-}
 
 fn generate_caps(
     capabilities: &Vec<Ident>,
@@ -320,35 +311,47 @@ fn generate_caps(
 }
 
 fn parse_metavalue_for_type(
-    id_metavalue: &MetaNameValue,
+    id_metavalue: &Option<MetaNameValue>,
     item_struct: &ItemStruct,
 ) -> Option<Type> {
-    let mut id_type = vec![];
-
-    let id_field_name = match &id_metavalue.lit {
-        Lit::Str(a) => Some(a.value()),
-        _ => None,
-    };
-    if id_field_name.is_some() {
-        let ident_fieldname = format_ident!("{}", &id_field_name.unwrap());
-        for f in &item_struct.fields {
-            let ident = f.ident.as_ref().unwrap();
-            if ident.eq(&ident_fieldname) {
-                id_type.push(f.to_owned().ty);
-            }
-        }
-        let val = id_type.pop().unwrap();
-        Some(val)
-    } else {
+    let out = if id_metavalue.is_none() {
         None
-    }
+    } else {
+        let mut id_type = vec![];
+        let id_field_name = match &id_metavalue.as_ref().unwrap().lit {
+            Lit::Str(a) => Some(a.value()),
+            _ => None,
+        };
+        if id_field_name.is_some() {
+            let ident_fieldname = format_ident!("{}", &id_field_name.unwrap());
+            for f in &item_struct.fields {
+                let ident = f.ident.as_ref().unwrap();
+                if ident.eq(&ident_fieldname) {
+                    id_type.push(f.to_owned().ty);
+                }
+            }
+            let val = id_type.pop().unwrap();
+            Some(val)
+        } else {
+            None
+        }
+    };
+    out
 }
 fn parse_args_for_id_field(attr_args: &Vec<NestedMeta>) -> Option<MetaNameValue> {
     let mut id_vec = vec![];
     for i in attr_args {
         let m = match i {
             NestedMeta::Meta(m) => match m {
-                Meta::NameValue(nv) => Some(nv),
+                Meta::NameValue(nv) => {
+                    
+                    let id = get_id_identifier();
+                    if nv.path.get_ident().unwrap().eq(&id) {
+                        Some(nv)
+                    } else {
+                        None
+                    }
+                },
                 _ => None,
             },
             _ => None,
@@ -362,16 +365,25 @@ fn parse_args_for_id_field(attr_args: &Vec<NestedMeta>) -> Option<MetaNameValue>
         None
     } else {
         let val = id_vec.pop().unwrap().to_owned();
+        eprintln!("{:?}", val.path.get_ident());
         Some(val)
     }
 }
 
 fn parse_name_for_service_field(attr_args: &Vec<NestedMeta>) -> Option<MetaNameValue> {
+
     let mut id_vec = vec![];
     for i in attr_args {
         let m = match i {
             NestedMeta::Meta(m) => match m {
-                Meta::NameValue(nv) => Some(nv),
+                Meta::NameValue(nv) => {
+                    let name = get_name_identifier();
+                    if nv.path.get_ident().unwrap().eq(&name) {
+                        Some(nv) 
+                    } else {
+                        None
+                    }
+                },
                 _ => None,
             },
             _ => None,
@@ -442,7 +454,6 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     let capability = format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct);
 
     let out = quote! {
-
         pub async fn #fn_signature<Service>(service: &Service, param: #item_struct ) -> Result<#item_struct, CapServiceError>
         where
             Service: #capability,
@@ -454,8 +465,8 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         impl Capability<#item_cap<#item_struct>> for CapService {
             type Data = #item_struct;
             type Error = CapServiceError;
-
-            async fn perform(&self, find_user: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
+            // this need to be dynamic, we need to find the CapRead"Struct_name" and get its values to be put in here.
+            async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
                 #fn_block
             }
         }
