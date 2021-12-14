@@ -17,11 +17,6 @@ const POOL_POSTGRES: &str = "PoolPostgres";
 const WEB_SERVICE: &str = "WebService";
 const CAP_PREFIX: &str = "Cap";
 
-
-/*
-    TODO: Missing naming of default field for the service struct.
-    Now it is named "con" and should be user customizable for better readability
-*/
 #[proc_macro_attribute]
 pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let item: Item = parse_macro_input!(annotated_item);
