@@ -13,7 +13,7 @@ pub struct Orders {
 }
 
 // name for db field
-#[service(PoolSqlite)]
+#[service(PoolSqlite, name = "kenneth")]
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     let connection_string = "sqlite::memory:".to_string();

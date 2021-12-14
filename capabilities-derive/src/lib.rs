@@ -17,8 +17,6 @@ const POOL_POSTGRES: &str = "PoolPostgres";
 const WEB_SERVICE: &str = "WebService";
 const CAP_PREFIX: &str = "Cap";
 
-#[allow(dead_code)]
-const FIELD_NAME: &str = "con";
 
 /*
     TODO: Missing naming of default field for the service struct.
@@ -30,16 +28,6 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let input_args: AttributeArgs = parse_macro_input!(args);
 
     let service = input_args.first().cloned();
-
-    //TODO: expand to more arguments,
-    // must be 1 or 2,and the first is a MetaList and the second one is NamedValue
-    if input_args.len() > 1 {
-        service
-            .span()
-            .unstable()
-            .error("Only supports one argument")
-            .emit();
-    }
 
     if service.is_none() {
         service
@@ -93,7 +81,8 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         }
     };
     let service_token = service_type.unwrap().unwrap();
-    let _service_field = parse_service_field_for_name(&input_args);
+    let service_field = parse_service_field_for_name(&input_args);
+
     let out = match service_token
         .path()
         .get_ident()
@@ -101,9 +90,9 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         .to_string()
         .as_str()
     {
-        POOL_SQLITE => Some(impl_code_database(service_token, item)),
-        POOL_POSTGRES => Some(impl_code_database(service_token, item)),
-        WEB_SERVICE => Some(impl_code_webservice(service_token, item)),
+        POOL_SQLITE => Some(impl_code_database(service_token, item, service_field)),
+        POOL_POSTGRES => Some(impl_code_database(service_token, item, service_field)),
+        WEB_SERVICE => Some(impl_code_webservice(service_token, item, service_field)),
         _ => {
             service_token
                 .span()

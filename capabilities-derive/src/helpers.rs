@@ -3,6 +3,9 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{Ident, Item, ItemStruct, Lit, Meta, MetaNameValue, NestedMeta, Type};
 
+#[allow(dead_code)]
+const FIELD_NAME: &str = "con";
+
 fn get_id_identifier() -> Ident {
     format_ident!("{}", "id")
 }
@@ -113,16 +116,30 @@ pub fn parse_metavalue_for_type(
     out
 }
 
-pub fn impl_code_database(service_token: Meta, item: Item) -> TokenStream {
+fn get_ident_from_field_name(field_name: Option<MetaNameValue>) -> Ident {
+    let id_field_name = if field_name.is_some() {
+        match &field_name.as_ref().unwrap().lit {
+            Lit::Str(a) => Some(a.value()),
+            _ => None,
+        }
+    } else {
+        None
+    };
+    let field_name = format_ident!("{}", id_field_name.unwrap_or(FIELD_NAME.to_string()));
+    field_name
+}
+
+pub fn impl_code_database(service_token: Meta, item: Item, field_name: Option<MetaNameValue>) -> TokenStream {
+    let field_id = get_ident_from_field_name(field_name);
+    
     let out = quote! {
         use async_trait::async_trait;
         pub struct CapService {
-            con: #service_token,
+            #field_id: #service_token,
         }
 
         #[derive(Debug)]
         pub struct CapServiceError;
-
 
         impl CapService {
             pub async fn build(conf: String) -> Result<Self, crate::CapServiceError> {
@@ -142,13 +159,16 @@ pub fn impl_code_database(service_token: Meta, item: Item) -> TokenStream {
         #item
     };
     out.into()
+
 }
 
-pub fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
+pub fn impl_code_webservice(service_token: Meta, item: Item, field_name: Option<MetaNameValue>) -> TokenStream {
+    let field_id = get_ident_from_field_name(field_name);
+
     let out = quote! {
         use async_trait::async_trait;
         pub struct CapService {
-            con: #service_token,
+            #field_id: #service_token,
         }
 
         #[derive(Debug)]
