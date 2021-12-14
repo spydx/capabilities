@@ -1,13 +1,16 @@
 #![feature(proc_macro_diagnostic)]
 mod helpers;
 
-use helpers::{get_id_identifier, get_name_identifier, get_cap_macro};
+use helpers::{
+    get_cap_macro, impl_code_database, impl_code_webservice, parse_field_args_for_id,
+    parse_metavalue_for_type, parse_service_field_for_name,
+};
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, AttributeArgs, Item, Meta, MetaNameValue, NestedMeta};
-use syn::{Ident, ItemStruct, Lit, Type};
+use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
+use syn::{Ident, Type};
 
 const POOL_SQLITE: &str = "PoolSqlite";
 const POOL_POSTGRES: &str = "PoolPostgres";
@@ -90,7 +93,7 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         }
     };
     let service_token = service_type.unwrap().unwrap();
-    let _service_field = parse_name_for_service_field(&input_args);
+    let _service_field = parse_service_field_for_name(&input_args);
     let out = match service_token
         .path()
         .get_ident()
@@ -112,66 +115,6 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     };
     if out.is_none() {}
     out.unwrap()
-}
-
-fn impl_code_database(service_token: Meta, item: Item) -> TokenStream {
-    let out = quote! {
-        use async_trait::async_trait;
-        pub struct CapService {
-            con: #service_token,
-        }
-
-        #[derive(Debug)]
-        pub struct CapServiceError;
-
-
-        impl CapService {
-            pub async fn build(conf: String) -> Result<Self, crate::CapServiceError> {
-                let con = Pool::connect(&conf)
-                    .await
-                    .expect("Failed to connect database");
-
-                Ok ( Self { con: con })
-            }
-        }
-        #[async_trait]
-        pub trait Capability<Operation> {
-            type Data;
-            type Error;
-            async fn perform(&self, _: Operation) -> Result<Self::Data, Self::Error>;
-        }
-        #item
-    };
-    out.into()
-}
-
-fn impl_code_webservice(service_token: Meta, item: Item) -> TokenStream {
-    let out = quote! {
-        use async_trait::async_trait;
-        pub struct CapService {
-            con: #service_token,
-        }
-
-        #[derive(Debug)]
-        pub struct CapServiceError;
-
-        impl CapService {
-            pub async fn build() -> Result<Self, crate::CapServiceError> {
-                let con = Client::new();
-
-                Ok(Self { con: con })
-            }
-        }
-        #[async_trait]
-        pub trait Capability<Operation> {
-            type Data;
-            type Error;
-            async fn perform(&self, _: Operation) -> Result<Self::Data, Self::Error>;
-        }
-        #item
-    };
-
-    out.into()
 }
 
 /*
@@ -226,12 +169,12 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         capidents.push(capident);
     }
 
-    let id_metavalue = parse_args_for_id_field(&attr_args);
+    let id_metavalue = parse_field_args_for_id(&attr_args);
     // this field needs to be dynamically assigned to different stuff.
 
     let struct_id = &item_struct.ident;
     let _id_type = parse_metavalue_for_type(&id_metavalue.clone(), &item_struct);
-    
+
     let generated_caps = generate_caps(&capidents, _id_type.clone(), &struct_id);
 
     quote! {
@@ -241,7 +184,6 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     }
     .into()
 }
-
 
 fn generate_caps(
     capabilities: &Vec<Ident>,
@@ -310,97 +252,6 @@ fn generate_caps(
     }
 }
 
-fn parse_metavalue_for_type(
-    id_metavalue: &Option<MetaNameValue>,
-    item_struct: &ItemStruct,
-) -> Option<Type> {
-    let out = if id_metavalue.is_none() {
-        None
-    } else {
-        let mut id_type = vec![];
-        let id_field_name = match &id_metavalue.as_ref().unwrap().lit {
-            Lit::Str(a) => Some(a.value()),
-            _ => None,
-        };
-        if id_field_name.is_some() {
-            let ident_fieldname = format_ident!("{}", &id_field_name.unwrap());
-            for f in &item_struct.fields {
-                let ident = f.ident.as_ref().unwrap();
-                if ident.eq(&ident_fieldname) {
-                    id_type.push(f.to_owned().ty);
-                }
-            }
-            let val = id_type.pop().unwrap();
-            Some(val)
-        } else {
-            None
-        }
-    };
-    out
-}
-fn parse_args_for_id_field(attr_args: &Vec<NestedMeta>) -> Option<MetaNameValue> {
-    let mut id_vec = vec![];
-    for i in attr_args {
-        let m = match i {
-            NestedMeta::Meta(m) => match m {
-                Meta::NameValue(nv) => {
-                    
-                    let id = get_id_identifier();
-                    if nv.path.get_ident().unwrap().eq(&id) {
-                        Some(nv)
-                    } else {
-                        None
-                    }
-                },
-                _ => None,
-            },
-            _ => None,
-        };
-        if m.is_some() {
-            let val = m.unwrap();
-            id_vec.push(val);
-        }
-    }
-    if id_vec.is_empty() {
-        None
-    } else {
-        let val = id_vec.pop().unwrap().to_owned();
-        eprintln!("{:?}", val.path.get_ident());
-        Some(val)
-    }
-}
-
-fn parse_name_for_service_field(attr_args: &Vec<NestedMeta>) -> Option<MetaNameValue> {
-
-    let mut id_vec = vec![];
-    for i in attr_args {
-        let m = match i {
-            NestedMeta::Meta(m) => match m {
-                Meta::NameValue(nv) => {
-                    let name = get_name_identifier();
-                    if nv.path.get_ident().unwrap().eq(&name) {
-                        Some(nv) 
-                    } else {
-                        None
-                    }
-                },
-                _ => None,
-            },
-            _ => None,
-        };
-        if m.is_some() {
-            let val = m.unwrap();
-            id_vec.push(val);
-        }
-    }
-    if id_vec.is_empty() {
-        None
-    } else {
-        let val = id_vec.pop().unwrap().to_owned();
-        Some(val)
-    }
-}
-
 #[proc_macro_attribute]
 pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let mut attr_args: AttributeArgs = parse_macro_input!(args);
@@ -465,7 +316,10 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         impl Capability<#item_cap<#item_struct>> for CapService {
             type Data = #item_struct;
             type Error = CapServiceError;
-            // this need to be dynamic, we need to find the CapRead"Struct_name" and get its values to be put in here.
+            // this need to be dynamic
+            // we need to find the CapRead"Struct_name"
+            // action: #item<#item_struct> in some cases should be #item_cap<#id_type>
+            // and get its values to be put in here.
             async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
                 #fn_block
             }
