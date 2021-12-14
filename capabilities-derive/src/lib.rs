@@ -2,7 +2,7 @@
 mod helpers;
 
 use helpers::{
-    get_cap_macro, impl_code_database, impl_code_webservice, parse_field_args_for_id,
+    generate_caps, impl_code_database, impl_code_webservice, parse_field_args_for_id,
     parse_metavalue_for_type, parse_service_field_for_name,
 };
 use proc_macro::TokenStream;
@@ -10,7 +10,6 @@ use quote::{format_ident, quote};
 
 use syn::spanned::Spanned;
 use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
-use syn::{Ident, Type};
 
 const POOL_SQLITE: &str = "PoolSqlite";
 const POOL_POSTGRES: &str = "PoolPostgres";
@@ -167,73 +166,6 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         #generated_caps
     }
     .into()
-}
-
-fn generate_caps(
-    capabilities: &Vec<Ident>,
-    id_type: Option<Type>,
-    struct_name: &Ident,
-) -> proc_macro2::TokenStream {
-    let create = format_ident!("{}{}", "CapCreate", struct_name).to_string();
-    let read = format_ident!("{}{}", "CapRead", struct_name).to_string();
-    let update = format_ident!("{}{}", "CapUpdate", struct_name).to_string();
-    let delete = format_ident!("{}{}", "CapDelete", struct_name).to_string();
-
-    // create a vector and then flatten with repetition in quote!
-    // use match to create the different out TokenStreams
-    let mut tokens = vec![];
-    let capmacro = get_cap_macro();
-    for cap in capabilities {
-        let outtokens = if cap.to_string().eq(&create) {
-            Some(quote! {
-                #capmacro
-                cap!( #cap for CapService, composing { Create<#struct_name>, #struct_name, CapServiceError});
-            })
-        } else if cap.to_string().eq(&read) {
-            if id_type.is_some() {
-                Some(quote! {
-                    #capmacro
-                    cap!( #cap for CapService, composing { Read<#id_type>, #struct_name, CapServiceError});
-                })
-            } else if id_type.is_none() {
-                Some(quote! {
-                   #capmacro
-                    cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
-                })
-            } else {
-                None
-            }
-        } else if cap.to_string().eq(&update) {
-            if id_type.is_some() {
-                Some(quote! {
-                    #capmacro
-                    cap!( #cap for CapService, composing { Update<#id_type>, #struct_name, CapServiceError});
-                })
-            } else if id_type.is_none() {
-                Some(quote! {
-                    #capmacro
-                    cap!( #cap for CapService, composing { Update<#struct_name>, #struct_name, CapServiceError});
-                })
-            } else {
-                None
-            }
-        } else if cap.to_string().eq(&delete) {
-            Some(quote! {
-                #capmacro
-                cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
-            })
-        } else {
-            None
-        };
-        if outtokens.is_some() {
-            let t = outtokens.unwrap();
-            tokens.push(t);
-        }
-    }
-
-    quote! {
-        #( #tokens )*
-    }
 }
 
 #[proc_macro_attribute]

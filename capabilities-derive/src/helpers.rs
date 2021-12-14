@@ -14,7 +14,7 @@ fn get_name_identifier() -> Ident {
     format_ident!("{}", "name")
 }
 
-pub fn get_cap_macro() -> TokenStream2 {
+fn get_cap_macro() -> TokenStream2 {
     quote! {
         macro_rules! cap {
         ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
@@ -129,9 +129,13 @@ fn get_ident_from_field_name(field_name: Option<MetaNameValue>) -> Ident {
     field_name
 }
 
-pub fn impl_code_database(service_token: Meta, item: Item, field_name: Option<MetaNameValue>) -> TokenStream {
+pub fn impl_code_database(
+    service_token: Meta,
+    item: Item,
+    field_name: Option<MetaNameValue>,
+) -> TokenStream {
     let field_id = get_ident_from_field_name(field_name);
-    
+
     let out = quote! {
         use async_trait::async_trait;
         pub struct CapService {
@@ -159,10 +163,13 @@ pub fn impl_code_database(service_token: Meta, item: Item, field_name: Option<Me
         #item
     };
     out.into()
-
 }
 
-pub fn impl_code_webservice(service_token: Meta, item: Item, field_name: Option<MetaNameValue>) -> TokenStream {
+pub fn impl_code_webservice(
+    service_token: Meta,
+    item: Item,
+    field_name: Option<MetaNameValue>,
+) -> TokenStream {
     let field_id = get_ident_from_field_name(field_name);
 
     let out = quote! {
@@ -191,4 +198,87 @@ pub fn impl_code_webservice(service_token: Meta, item: Item, field_name: Option<
     };
 
     out.into()
+}
+
+pub fn generate_caps(
+    capabilities: &Vec<Ident>,
+    id_type: Option<Type>,
+    struct_name: &Ident,
+) -> TokenStream2 {
+    let create = format_ident!("{}{}", "CapCreate", struct_name).to_string();
+    let read = format_ident!("{}{}", "CapRead", struct_name).to_string();
+    let update = format_ident!("{}{}", "CapUpdate", struct_name).to_string();
+    let delete = format_ident!("{}{}", "CapDelete", struct_name).to_string();
+    let readall = format_ident!("{}{}", "CanReadAll", struct_name).to_string();
+    let deleteall = format_ident!("{}{}", "CanDeleteAll", struct_name).to_string();
+    let updateall = format_ident!("{}{}", "CanUpdateAll", struct_name).to_string();
+
+    let mut tokens = vec![];
+    let capmacro = get_cap_macro();
+    for cap in capabilities {
+        let outtokens = if cap.to_string().eq(&create) {
+            Some(quote! {
+                #capmacro
+                cap!( #cap for CapService, composing { Create<#struct_name>, #struct_name, CapServiceError});
+            })
+        } else if cap.to_string().eq(&read) {
+            if id_type.is_some() {
+                Some(quote! {
+                    #capmacro
+                    cap!( #cap for CapService, composing { Read<#id_type>, #struct_name, CapServiceError});
+                })
+            } else if id_type.is_none() {
+                Some(quote! {
+                   #capmacro
+                    cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
+                })
+            } else {
+                None
+            }
+        } else if cap.to_string().eq(&update) {
+            if id_type.is_some() {
+                Some(quote! {
+                    #capmacro
+                    cap!( #cap for CapService, composing { Update<#id_type>, #struct_name, CapServiceError});
+                })
+            } else if id_type.is_none() {
+                Some(quote! {
+                    #capmacro
+                    cap!( #cap for CapService, composing { Update<#struct_name>, #struct_name, CapServiceError});
+                })
+            } else {
+                None
+            }
+        } else if cap.to_string().eq(&delete) {
+            Some(quote! {
+                #capmacro
+                cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
+            })
+        } else if cap.to_string().eq(&deleteall) {
+            Some(quote! {
+                #capmacro
+                cap!( #cap for CapService, composing { DeleteAll<#struct_name>, (), CapServiceError});
+            })
+        } else if cap.to_string().eq(&updateall) {
+            Some(quote! {
+                #capmacro
+                cap!( #cap for CapService, composing { UpdateAll<#struct_name>, (), CapServiceError});
+            })
+        } else if cap.to_string().eq(&readall) {
+            Some(quote! {
+                #capmacro
+                cap!( #cap for CapService, composing { ReadAll<#struct_name>, (), CapServiceError});
+            })
+        } else {
+            None
+        };
+        if outtokens.is_some() {
+            let t = outtokens.unwrap();
+            tokens.push(t);
+        }
+    }
+
+    quote! {
+        #( #tokens )*
+    }
 }

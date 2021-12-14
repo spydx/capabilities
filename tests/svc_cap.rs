@@ -6,14 +6,12 @@ use sqlx::Pool;
 
 #[capabilities(Read, id = "id")]
 pub struct Orders {
-    #[allow(dead_code)]
     id: i32,
-    #[allow(dead_code)]
     name: String,
 }
 
 // name for db field
-#[service(PoolSqlite, name = "kenneth")]
+#[service(PoolSqlite, name = "db")]
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     let connection_string = "sqlite::memory:".to_string();
@@ -24,6 +22,7 @@ async fn main() -> Result<(), std::io::Error> {
 }
 
 // The trait for CanReadOrders -> is Read<Orders> and not Read<i32>
+// is correct if not using id = "id" with capabilities
 #[capability(Read, Orders)]
 fn get_order(order_id: i32) -> Result<Orders, CapServiceError> {
     Ok(Orders {

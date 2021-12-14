@@ -13,7 +13,6 @@ pub enum Operations {
     Read,
     Update,
     Delete,
-    CreateAll,
     ReadAll,
     UpdateAll,
     DeleteAll,
@@ -36,9 +35,15 @@ pub struct Delete<T> {
     pub data: T,
 }
 
-pub struct ReadAll;
-pub struct UpdateAll;
-pub struct DeleteAll;
+pub struct ReadAll<T> {
+    pub data: T,
+}
+pub struct UpdateAll<T> {
+    pub data: T,
+}
+pub struct DeleteAll<T> {
+    pub data: T,
+}
 
 pub type PoolSqlite = Pool<Sqlite>;
 pub type PoolPostgres = Pool<Postgres>;
