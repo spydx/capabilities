@@ -186,6 +186,8 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
 
     let arg_struct = attr_args.pop().unwrap();
     let arg_capability = attr_args.pop().unwrap();
+    //let arg_path = attr_args.pop().unwrap();
+    //eprintln!("{:?}", arg_path);
 
     let arg_capability = match arg_capability {
         NestedMeta::Meta(m) => Some(m),
@@ -218,6 +220,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
 
     let item_struct = &arg_struct.unwrap().path().get_ident().unwrap().clone();
     let item_cap = &arg_capability.unwrap().path().get_ident().unwrap().clone();
+    
     let capability = format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct);
 
     let out = quote! {

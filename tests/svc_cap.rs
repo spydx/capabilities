@@ -10,7 +10,6 @@ pub struct Orders {
     name: String,
 }
 
-// name for db field
 #[service(PoolSqlite, name = "db")]
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {

@@ -135,7 +135,7 @@ pub fn impl_code_database(
     field_name: Option<MetaNameValue>,
 ) -> TokenStream {
     let field_id = get_ident_from_field_name(field_name);
-
+    
     let out = quote! {
         use async_trait::async_trait;
         pub struct CapService {
@@ -151,7 +151,7 @@ pub fn impl_code_database(
                     .await
                     .expect("Failed to connect database");
 
-                Ok ( Self { con: con })
+                Ok ( Self { #field_id: con })
             }
         }
         #[async_trait]
