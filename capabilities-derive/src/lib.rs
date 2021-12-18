@@ -173,6 +173,14 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     let mut attr_args: AttributeArgs = parse_macro_input!(args);
     let item: Item = parse_macro_input!(annotated_item);
 
+    if attr_args.is_empty() {
+        item.span()
+            .unstable()
+            .error("Missing arguments Capability and Struct")
+            .emit();
+    }
+
+
     let s = match item {
         Item::Fn(ref s) => Some(s),
         _ => {
@@ -184,35 +192,72 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         }
     };
 
-    let arg_struct = attr_args.pop().unwrap();
-    let arg_capability = attr_args.pop().unwrap();
-    //let arg_path = attr_args.pop().unwrap();
-    //eprintln!("{:?}", arg_path);
+    if s.is_none() { 
+        s.span().unstable().error("Missing function").emit();
+    }
 
-    let arg_capability = match arg_capability {
-        NestedMeta::Meta(m) => Some(m),
-        _ => {
-            arg_capability
-                .span()
-                .unstable()
-                .error("Not a capability we support")
-                .emit();
-            None
+    let arg_path = attr_args.pop();
+    let arg_struct = attr_args.pop();
+    let arg_capability = attr_args.pop();
+    
+    
+    let arg_path = if arg_path.is_some() { 
+        match arg_path.unwrap() {
+            NestedMeta::Meta(p) => match p {
+                Meta::NameValue(nv) => {
+                    let field_name = format_ident!("{}", "id");
+                    if nv.path.get_ident().unwrap().eq(&field_name) {
+                        Some(nv)
+                    } else {
+                        None
+                    }
+                },
+                _ => None
+            },
+            _ => None
         }
+    } else {
+        None
     };
 
-    let arg_struct = match arg_struct {
-        NestedMeta::Meta(m) => Some(m),
-        _ => {
-            arg_capability
-                .span()
-                .unstable()
-                .error("This should be a struct")
-                .emit();
-            None
+    let arg_capability = if arg_capability.is_some() {
+        match arg_capability.as_ref().unwrap() {
+            NestedMeta::Meta(m) => Some(m),
+            _ => {
+                arg_capability
+                    .span()
+                    .unstable()
+                    .error("Not a capability we support")
+                    .emit();
+                None
+            }
         }
+    } else {
+        arg_capability.span().unstable().error("Missing capability / struct / wrong order").emit();
+        None
     };
 
+    let arg_struct = if arg_struct.is_some() {
+        match arg_struct.unwrap() {
+            NestedMeta::Meta(m) => Some(m),
+            _ => {
+                arg_capability
+                    .span()
+                    .unstable()
+                    .error("This should be a struct")
+                    .emit();
+                None
+            }
+        }
+    } else {
+        arg_capability.span().unstable().error("Missing capability / struct / wrong order").emit();
+        None
+    };
+
+    eprintln!("{:?}", arg_path);
+    eprintln!("{:?}", arg_struct);
+    eprintln!("{:?}", arg_capability);
+   
     let fn_signature = &s.unwrap().sig.ident;
     // can only hold one param
     let _fn_attrs = &s.unwrap().attrs;
@@ -220,7 +265,6 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
 
     let item_struct = &arg_struct.unwrap().path().get_ident().unwrap().clone();
     let item_cap = &arg_capability.unwrap().path().get_ident().unwrap().clone();
-    
     let capability = format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct);
 
     let out = quote! {

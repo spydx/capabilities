@@ -22,6 +22,7 @@ async fn main() -> Result<(), std::io::Error> {
 
 // The trait for CanReadOrders -> is Read<Orders> and not Read<i32>
 // is correct if not using id = "id" with capabilities
+// we should try to do id = "i32", to mitigate problems.
 #[capability(Read, Orders)]
 fn get_order(order_id: i32) -> Result<Orders, CapServiceError> {
     Ok(Orders {
