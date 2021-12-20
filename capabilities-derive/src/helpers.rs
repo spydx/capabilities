@@ -121,7 +121,7 @@ pub fn parse_metavalue_for_type_ident(
     item_struct: &Ident,
 ) -> Option<Ident> {
     let out = if id_metavalue.is_none() {
-        None
+        Some(item_struct.to_owned())
     } else {
         let id_field_name = match &id_metavalue.as_ref().unwrap().lit {
             Lit::Str(a) => Some(a.value()),
@@ -131,7 +131,7 @@ pub fn parse_metavalue_for_type_ident(
             let ident_fieldname = format_ident!("{}", &id_field_name.unwrap());
             Some(ident_fieldname)
         } else {
-            Some(item_struct.to_owned())
+           None 
         }
     };
     out

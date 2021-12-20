@@ -195,7 +195,12 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         s.span().unstable().error("Missing function").emit();
     }
 
-    let arg_path = attr_args.pop();
+    let arg_path = if attr_args.len() == 3 {
+        attr_args.pop()
+    } else {
+        None
+    };
+     
     let arg_struct = attr_args.pop();
     let arg_capability = attr_args.pop();
 
@@ -269,7 +274,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     let capability = format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct);
 
     let action_id = parse_metavalue_for_type_ident(&arg_path, &item_struct);
-
+    eprintln!("{:?}", action_id);
     let out = quote! {
         pub async fn #fn_signature<Service>(service: &Service, param: #action_id) -> Result<#item_struct, CapServiceError>
         where

@@ -4,7 +4,7 @@ use capabilities_derive::capability;
 use capabilities_derive::service;
 use sqlx::Pool;
 
-#[capabilities(Read, id = "id")]
+#[capabilities(Read)]
 pub struct Orders {
     id: i32,
     name: String,
@@ -23,7 +23,7 @@ async fn main() -> Result<(), std::io::Error> {
 // The trait for CanReadOrders -> is Read<Orders> and not Read<i32>
 // is correct if not using id = "id" with capabilities
 // we should try to do id = "i32", to mitigate problems.
-#[capability(Read, Orders, id = "i32")]
+#[capability(Read, Orders)]
 fn get_order(order_id: i32) -> Result<Orders, CapServiceError> {
     Ok(Orders {
         id: 1,
