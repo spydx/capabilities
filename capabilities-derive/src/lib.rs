@@ -269,12 +269,21 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
 
     let fn_block = &s.unwrap().block;
 
-    let item_struct = &arg_struct.unwrap().path().get_ident().unwrap().clone();
-    let item_cap = &arg_capability.unwrap().path().get_ident().unwrap().clone();
+    let item_struct = if arg_struct.is_some() {
+        arg_struct.unwrap().path().get_ident().unwrap().clone()
+    } else { 
+        format_ident!("{}", "ErrorIdentStruct")
+    };
+
+    let item_cap = if arg_capability.is_some() {
+        arg_capability.unwrap().path().get_ident().unwrap().clone()
+    } else {
+        format_ident!("{}", "capErrroIdent")
+    };
     let capability = format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct);
 
     let action_id = parse_metavalue_for_type_ident(&arg_path, &item_struct);
-    eprintln!("{:?}", action_id);
+
     let out = quote! {
         pub async fn #fn_signature<Service>(service: &Service, param: #action_id) -> Result<#item_struct, CapServiceError>
         where
