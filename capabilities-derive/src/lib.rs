@@ -3,7 +3,7 @@ mod helpers;
 
 use helpers::{
     generate_caps, impl_code_database, impl_code_webservice, parse_field_args_for_id,
-    parse_metavalue_for_type, parse_service_field_for_name,
+    parse_metavalue_for_type, parse_service_field_for_name, parse_metavalue_for_type_ident
 };
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
@@ -200,7 +200,6 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     let arg_struct = attr_args.pop();
     let arg_capability = attr_args.pop();
     
-    
     let arg_path = if arg_path.is_some() { 
         match arg_path.unwrap() {
             NestedMeta::Meta(p) => match p {
@@ -253,22 +252,19 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         arg_capability.span().unstable().error("Missing capability / struct / wrong order").emit();
         None
     };
-
-    eprintln!("{:?}", arg_path);
-    eprintln!("{:?}", arg_struct);
-    eprintln!("{:?}", arg_capability);
    
     let fn_signature = &s.unwrap().sig.ident;
-    // can only hold one param
-    let _fn_attrs = &s.unwrap().attrs;
+
     let fn_block = &s.unwrap().block;
 
     let item_struct = &arg_struct.unwrap().path().get_ident().unwrap().clone();
     let item_cap = &arg_capability.unwrap().path().get_ident().unwrap().clone();
     let capability = format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct);
-
+    
+    let action_id = parse_metavalue_for_type_ident(&arg_path, &item_struct);
+   
     let out = quote! {
-        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct ) -> Result<#item_struct, CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, param: #action_id) -> Result<#item_struct, CapServiceError>
         where
             Service: #capability,
         {
@@ -276,14 +272,11 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         }
 
         #[async_trait]
-        impl Capability<#item_cap<#item_struct>> for CapService {
+        impl Capability<#item_cap<#action_id>> for CapService {
             type Data = #item_struct;
             type Error = CapServiceError;
-            // this need to be dynamic
-            // we need to find the CapRead"Struct_name"
-            // action: #item<#item_struct> in some cases should be #item_cap<#id_type>
-            // and get its values to be put in here.
-            async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
+            
+            async fn perform(&self, action: #item_cap<#action_id>) -> Result<Self::Data, Self::Error> {
                 #fn_block
             }
         }

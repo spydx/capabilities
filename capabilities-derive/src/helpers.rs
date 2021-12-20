@@ -116,6 +116,27 @@ pub fn parse_metavalue_for_type(
     out
 }
 
+pub fn parse_metavalue_for_type_ident(
+    id_metavalue: &Option<MetaNameValue>,
+    item_struct: &Ident
+) -> Option<Ident> {
+    let out = if id_metavalue.is_none() {
+        None
+    } else {
+        let id_field_name = match &id_metavalue.as_ref().unwrap().lit {
+            Lit::Str(a) => Some(a.value()),
+            _ => None,
+        };
+        if id_field_name.is_some() {
+            let ident_fieldname = format_ident!("{}", &id_field_name.unwrap());            
+            Some(ident_fieldname)
+        } else {
+            Some(item_struct.to_owned())
+        }
+    };
+    out
+}
+
 fn get_ident_from_field_name(field_name: Option<MetaNameValue>) -> Ident {
     let id_field_name = if field_name.is_some() {
         match &field_name.as_ref().unwrap().lit {
