@@ -118,7 +118,7 @@ pub fn parse_metavalue_for_type(
 
 pub fn parse_metavalue_for_type_ident(
     id_metavalue: &Option<MetaNameValue>,
-    item_struct: &Ident
+    item_struct: &Ident,
 ) -> Option<Ident> {
     let out = if id_metavalue.is_none() {
         None
@@ -128,7 +128,7 @@ pub fn parse_metavalue_for_type_ident(
             _ => None,
         };
         if id_field_name.is_some() {
-            let ident_fieldname = format_ident!("{}", &id_field_name.unwrap());            
+            let ident_fieldname = format_ident!("{}", &id_field_name.unwrap());
             Some(ident_fieldname)
         } else {
             Some(item_struct.to_owned())
@@ -156,7 +156,7 @@ pub fn impl_code_database(
     field_name: Option<MetaNameValue>,
 ) -> TokenStream {
     let field_id = get_ident_from_field_name(field_name);
-    
+
     let out = quote! {
         use async_trait::async_trait;
         pub struct CapService {
