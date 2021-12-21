@@ -83,7 +83,7 @@ Then we can use, `cargo test` with the environment variable `TRYBUILD=overwrite`
 
 ... <other tests>
 
-test service_db.rs [should pass] ... oks
+test service_db.rs [should pass] ... ok
 test service_web.rs [should pass] ... ok
 test database.rs [should fail to compile] ... ok
 test service_struct.rs [should fail to compile] ... ok
