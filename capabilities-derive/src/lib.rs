@@ -200,7 +200,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     } else {
         None
     };
-     
+
     let arg_struct = attr_args.pop();
     let arg_capability = attr_args.pop();
 
@@ -271,7 +271,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
 
     let item_struct = if arg_struct.is_some() {
         arg_struct.unwrap().path().get_ident().unwrap().clone()
-    } else { 
+    } else {
         format_ident!("{}", "ErrorIdentStruct")
     };
 

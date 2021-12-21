@@ -131,7 +131,7 @@ pub fn parse_metavalue_for_type_ident(
             let ident_fieldname = format_ident!("{}", &id_field_name.unwrap());
             Some(ident_fieldname)
         } else {
-           None 
+            None
         }
     };
     out
