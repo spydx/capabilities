@@ -158,6 +158,7 @@ pub fn impl_code_database(
     let field_id = get_ident_from_field_name(field_name);
 
     let out = quote! {
+        use sqlx::Pool;
         use async_trait::async_trait;
         pub struct CapService {
             #field_id: #service_token,

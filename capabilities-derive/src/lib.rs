@@ -16,6 +16,12 @@ const POOL_POSTGRES: &str = "PoolPostgres";
 const WEB_SERVICE: &str = "WebService";
 const CAP_PREFIX: &str = "Cap";
 
+/* Need better error handling for when user types wrong paramteres.
+    E.g writing #[service(name = "db")], results in unwrap() on a None.
+    We are missing the Service type param, and should give this message to the user.
+
+    Database needs sqlx::Pool injected in the code.. fixed now but not sure this is the best way.
+ */
 #[proc_macro_attribute]
 pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let item: Item = parse_macro_input!(annotated_item);
