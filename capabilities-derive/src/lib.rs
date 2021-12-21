@@ -21,6 +21,7 @@ const CAP_PREFIX: &str = "Cap";
     We are missing the Service type param, and should give this message to the user.
 
     Database needs sqlx::Pool injected in the code.. fixed now but not sure this is the best way.
+    
  */
 #[proc_macro_attribute]
 pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
