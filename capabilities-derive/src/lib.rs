@@ -21,7 +21,7 @@ const CAP_PREFIX: &str = "Cap";
     We are missing the Service type param, and should give this message to the user.
 
     Database needs sqlx::Pool injected in the code.. fixed now but not sure this is the best way.
-    
+
  */
 #[proc_macro_attribute]
 pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
@@ -273,7 +273,15 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     };
 
     let fn_signature = &s.unwrap().sig.ident;
+    /* 
+        Grabbing input here and putting it into the function 
+        as param / action so we can use the values the user is input into the function.
+        Now the user cannot get the input, has to access the data through aciton.data, 
+        which is not good.
 
+    */
+    let _fn_attr = s.unwrap().sig.inputs.first().unwrap();
+    //eprintln!("{:?}", _fn_attr);
     let fn_block = &s.unwrap().block;
 
     let item_struct = if arg_struct.is_some() {
