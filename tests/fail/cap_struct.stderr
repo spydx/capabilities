@@ -1,3 +1,15 @@
+error[E0252]: the name `Pool` is defined multiple times
+  --> tests/fail/cap_struct.rs:12:1
+   |
+4  | use sqlx::Pool;
+   |     ---------- previous import of the type `Pool` here
+...
+12 | #[service(PoolSqlite)]
+   | ^^^^^^^^^^^^^^^^^^^^^^ `Pool` reimported here
+   |
+   = note: `Pool` must be defined only once in the type namespace of this module
+   = note: this error originates in the attribute macro `service` (in Nightly builds, run with -Z macro-backtrace for more info)
+
 error[E0277]: the trait bound `CapService: Capability<capabilities::Delete<Orders>>` is not satisfied
  --> tests/fail/cap_struct.rs:6:38
   |

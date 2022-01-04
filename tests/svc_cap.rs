@@ -5,7 +5,9 @@ use capabilities_derive::service;
 
 #[capabilities(Read, id = "id")]
 pub struct Orders {
+    #[allow(dead_code)]
     id: i32,
+    #[allow(dead_code)]
     name: String,
 }
 

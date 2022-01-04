@@ -17,7 +17,8 @@ const POOL_POSTGRES: &str = "PoolPostgres";
 const WEB_SERVICE: &str = "WebService";
 const CAP_PREFIX: &str = "Cap";
 
-/* Need better error handling for when user types wrong paramteres.
+/* 
+    Need better error handling for when user types wrong paramteres.
     E.g writing #[service(name = "db")], results in unwrap() on a None.
     We are missing the Service type param, and should give this message to the user.
 
@@ -274,15 +275,8 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     };
 
     let fn_signature = &s.unwrap().sig.ident;
-    /* 
-        Grabbing input here and putting it into the function 
-        as param / action so we can use the values the user is input into the function.
-        Now the user cannot get the input, has to access the data through aciton.data, 
-        which is not good.
-
-    */
     let fn_attr = s.unwrap().sig.inputs.first().unwrap();
-    let fn_var = match fn_attr {
+    let fn_attrname = match fn_attr {
         Typed(t) => {
             let ident = &t.pat;
             Some(ident)
@@ -321,7 +315,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
             type Error = CapServiceError;
 
             async fn perform(&self, action: #item_cap<#action_id>) -> Result<Self::Data, Self::Error> {
-                let #fn_var = action.data;
+                let #fn_attrname = action.data;
                 #fn_block
             }
         }

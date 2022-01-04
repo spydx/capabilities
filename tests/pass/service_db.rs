@@ -1,6 +1,5 @@
 use capabilities::PoolSqlite;
 use capabilities_derive::service;
-use sqlx::Pool;
 
 #[service(PoolSqlite)]
 #[tokio::main]
