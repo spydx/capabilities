@@ -91,6 +91,24 @@ test service_struct.rs [should fail to compile] ... ok
 ... <other tests>
 ```
 
+### New failing tests
+
+For new failing tests we have to run the `cargo test` with the envariable `TRYBUILD`.
+
+```sh
+# set variable
+> export TRYBUILD=overwrite
+>
+# then run cargo test */
+>
+# remove variable
+> unset TRYBUILD
+>
+# output of all environment variables
+> env 
+```
+
+
 ## Sources
 
 [Rust Macro tips](https://www.youtube.com/watch?v=5rwnWfMJflU)
