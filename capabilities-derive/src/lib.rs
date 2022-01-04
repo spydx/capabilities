@@ -10,6 +10,7 @@ use quote::{format_ident, quote};
 
 use syn::spanned::Spanned;
 use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
+use syn::FnArg::Typed;
 
 const POOL_SQLITE: &str = "PoolSqlite";
 const POOL_POSTGRES: &str = "PoolPostgres";
@@ -280,8 +281,15 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         which is not good.
 
     */
-    let _fn_attr = s.unwrap().sig.inputs.first().unwrap();
-    //eprintln!("{:?}", _fn_attr);
+    let fn_attr = s.unwrap().sig.inputs.first().unwrap();
+    let fn_var = match fn_attr {
+        Typed(t) => {
+            let ident = &t.pat;
+            Some(ident)
+        },
+        _  => None
+    };
+
     let fn_block = &s.unwrap().block;
 
     let item_struct = if arg_struct.is_some() {
@@ -313,6 +321,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
             type Error = CapServiceError;
 
             async fn perform(&self, action: #item_cap<#action_id>) -> Result<Self::Data, Self::Error> {
+                let #fn_var = action.data;
                 #fn_block
             }
         }

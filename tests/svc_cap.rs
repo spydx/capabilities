@@ -24,8 +24,6 @@ async fn main() -> Result<(), std::io::Error> {
 // we should try to do id = "i32", to mitigate problems.
 #[capability(Read, Orders, id = "i32")]
 fn get_order(order_id: i32) -> Result<Orders, CapServiceError> {
-    let order_id = action.data;
-
     Ok(Orders {
         id: order_id,
         name: "MY order".to_string(),
