@@ -1,63 +1,51 @@
-error[E0252]: the name `Pool` is defined multiple times
-  --> tests/fail/cap_struct.rs:12:1
-   |
-4  | use sqlx::Pool;
-   |     ---------- previous import of the type `Pool` here
-...
-12 | #[service(PoolSqlite)]
-   | ^^^^^^^^^^^^^^^^^^^^^^ `Pool` reimported here
-   |
-   = note: `Pool` must be defined only once in the type namespace of this module
-   = note: this error originates in the attribute macro `service` (in Nightly builds, run with -Z macro-backtrace for more info)
-
 error[E0277]: the trait bound `CapService: Capability<capabilities::Delete<Orders>>` is not satisfied
- --> tests/fail/cap_struct.rs:6:38
+ --> tests/fail/cap_struct.rs:4:38
   |
-6 | #[capabilities(Create, Read, Update, Delete)]
+4 | #[capabilities(Create, Read, Update, Delete)]
   |                                      ^^^^^^ the trait `Capability<capabilities::Delete<Orders>>` is not implemented for `CapService`
   |
 note: required by a bound in `CapDeleteOrders`
- --> tests/fail/cap_struct.rs:6:1
+ --> tests/fail/cap_struct.rs:4:1
   |
-6 | #[capabilities(Create, Read, Update, Delete)]
+4 | #[capabilities(Create, Read, Update, Delete)]
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `CapDeleteOrders`
   = note: this error originates in the macro `cap` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0277]: the trait bound `CapService: Capability<capabilities::Update<Orders>>` is not satisfied
- --> tests/fail/cap_struct.rs:6:30
+ --> tests/fail/cap_struct.rs:4:30
   |
-6 | #[capabilities(Create, Read, Update, Delete)]
+4 | #[capabilities(Create, Read, Update, Delete)]
   |                              ^^^^^^ the trait `Capability<capabilities::Update<Orders>>` is not implemented for `CapService`
   |
 note: required by a bound in `CapUpdateOrders`
- --> tests/fail/cap_struct.rs:6:1
+ --> tests/fail/cap_struct.rs:4:1
   |
-6 | #[capabilities(Create, Read, Update, Delete)]
+4 | #[capabilities(Create, Read, Update, Delete)]
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `CapUpdateOrders`
   = note: this error originates in the macro `cap` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0277]: the trait bound `CapService: Capability<capabilities::Read<Orders>>` is not satisfied
- --> tests/fail/cap_struct.rs:6:24
+ --> tests/fail/cap_struct.rs:4:24
   |
-6 | #[capabilities(Create, Read, Update, Delete)]
+4 | #[capabilities(Create, Read, Update, Delete)]
   |                        ^^^^ the trait `Capability<capabilities::Read<Orders>>` is not implemented for `CapService`
   |
 note: required by a bound in `CapReadOrders`
- --> tests/fail/cap_struct.rs:6:1
+ --> tests/fail/cap_struct.rs:4:1
   |
-6 | #[capabilities(Create, Read, Update, Delete)]
+4 | #[capabilities(Create, Read, Update, Delete)]
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `CapReadOrders`
   = note: this error originates in the macro `cap` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0277]: the trait bound `CapService: Capability<capabilities::Create<Orders>>` is not satisfied
- --> tests/fail/cap_struct.rs:6:16
+ --> tests/fail/cap_struct.rs:4:16
   |
-6 | #[capabilities(Create, Read, Update, Delete)]
+4 | #[capabilities(Create, Read, Update, Delete)]
   |                ^^^^^^ the trait `Capability<capabilities::Create<Orders>>` is not implemented for `CapService`
   |
 note: required by a bound in `CapCreateOrders`
- --> tests/fail/cap_struct.rs:6:1
+ --> tests/fail/cap_struct.rs:4:1
   |
-6 | #[capabilities(Create, Read, Update, Delete)]
+4 | #[capabilities(Create, Read, Update, Delete)]
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `CapCreateOrders`
   = note: this error originates in the macro `cap` (in Nightly builds, run with -Z macro-backtrace for more info)

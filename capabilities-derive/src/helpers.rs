@@ -151,7 +151,7 @@ fn get_ident_from_field_name(field_name: Option<MetaNameValue>) -> Ident {
 }
 
 pub fn impl_code_database(
-    service_token: Meta,
+    service_token: &Meta,
     item: Item,
     field_name: Option<MetaNameValue>,
 ) -> TokenStream {
@@ -188,7 +188,7 @@ pub fn impl_code_database(
 }
 
 pub fn impl_code_webservice(
-    service_token: Meta,
+    service_token: &Meta,
     item: Item,
     field_name: Option<MetaNameValue>,
 ) -> TokenStream {

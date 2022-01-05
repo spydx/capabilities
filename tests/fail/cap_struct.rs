@@ -1,15 +1,13 @@
-use capabilities::PoolSqlite;
+use capabilities::SqliteDb;
 use capabilities_derive::capabilities;
 use capabilities_derive::service;
-use sqlx::Pool;
-
 #[capabilities(Create, Read, Update, Delete)]
 struct Orders {
     id: i32,
     name: String,
 }
 
-#[service(PoolSqlite)]
+#[service(SqliteDb)]
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     let connection_string = "sqlite::memory:".to_string();

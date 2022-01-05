@@ -12,8 +12,8 @@ use syn::spanned::Spanned;
 use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
 use syn::FnArg::Typed;
 
-const POOL_SQLITE: &str = "PoolSqlite";
-const POOL_POSTGRES: &str = "PoolPostgres";
+const POOL_SQLITE: &str = "SqliteDb";
+const POOL_POSTGRES: &str = "PostgresDb";
 const WEB_SERVICE: &str = "WebService";
 const CAP_PREFIX: &str = "Cap";
 
@@ -64,7 +64,7 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
                     nm.span()
                         .unstable()
                         .error(format!(
-                            "Unknown type, there is no support for this type: {}",
+                            "Incorrect order, missing ServiceType: {}",
                             ident
                         ))
                         .emit();
@@ -83,19 +83,25 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
             None
         }
     };
-    let service_token = service_type.unwrap().unwrap();
+    let service_token = if service_type.is_some() {
+        Some(service_type.unwrap().unwrap())
+    } else {
+        service_type.span().unstable().error(format!("Missing Service type")).emit();
+        None
+    };
     let service_field = parse_service_field_for_name(&input_args);
 
-    let out = match service_token
+    let out = match service_token.as_ref()
+        .unwrap()
         .path()
         .get_ident()
         .unwrap()
         .to_string()
         .as_str()
     {
-        POOL_SQLITE => Some(impl_code_database(service_token, item, service_field)),
-        POOL_POSTGRES => Some(impl_code_database(service_token, item, service_field)),
-        WEB_SERVICE => Some(impl_code_webservice(service_token, item, service_field)),
+        POOL_SQLITE => Some(impl_code_database(&service_token.unwrap(), item, service_field)),
+        POOL_POSTGRES => Some(impl_code_database(&service_token.unwrap(), item, service_field)),
+        WEB_SERVICE => Some(impl_code_webservice(&service_token.unwrap(), item, service_field)),
         _ => {
             service_token
                 .span()

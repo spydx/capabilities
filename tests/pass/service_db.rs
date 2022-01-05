@@ -1,7 +1,7 @@
-use capabilities::PoolSqlite;
+use capabilities::SqliteDb;
 use capabilities_derive::service;
 
-#[service(PoolSqlite)]
+#[service(SqliteDb)]
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     let connection_string = "sqlite::memory:".to_string();

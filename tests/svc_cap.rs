@@ -1,4 +1,4 @@
-use capabilities::PoolSqlite;
+use capabilities::SqliteDb;
 use capabilities_derive::capabilities;
 use capabilities_derive::capability;
 use capabilities_derive::service;
@@ -11,7 +11,7 @@ pub struct Orders {
     name: String,
 }
 
-#[service(PoolSqlite, name = "db")]
+#[service(SqliteDb, name = "db")]
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     let connection_string = "sqlite::memory:".to_string();

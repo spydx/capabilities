@@ -45,6 +45,6 @@ pub struct DeleteAll<T> {
     pub data: T,
 }
 
-pub type PoolSqlite = Pool<Sqlite>;
-pub type PoolPostgres = Pool<Postgres>;
+pub type SqliteDb = Pool<Sqlite>;
+pub type PostgresDb = Pool<Postgres>;
 pub type WebService = Client;
