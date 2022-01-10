@@ -6,26 +6,26 @@ use helpers::{
     parse_metavalue_for_type, parse_metavalue_for_type_ident, parse_service_field_for_name,
 };
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
 use proc_macro2::Span;
+use quote::{format_ident, quote};
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
 use syn::FnArg::Typed;
-use syn::{Ident, Block};
+use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
+use syn::{Block, Ident};
 
 const POOL_SQLITE: &str = "SqliteDb";
 const POOL_POSTGRES: &str = "PostgresDb";
 const WEB_SERVICE: &str = "WebService";
 const CAP_PREFIX: &str = "Cap";
 
-/* 
-    Need better error handling for when user types wrong paramteres.
-    E.g writing #[service(name = "db")], results in unwrap() on a None.
-    We are missing the Service type param, and should give this message to the user.
+/*
+   Need better error handling for when user types wrong paramteres.
+   E.g writing #[service(name = "db")], results in unwrap() on a None.
+   We are missing the Service type param, and should give this message to the user.
 
-    Database needs sqlx::Pool injected in the code.. fixed now but not sure this is the best way.
+   Database needs sqlx::Pool injected in the code.. fixed now but not sure this is the best way.
 
- */
+*/
 #[proc_macro_attribute]
 pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let item: Item = parse_macro_input!(annotated_item);
@@ -64,10 +64,7 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
                     let ident = nm.path().get_ident().unwrap().to_string();
                     nm.span()
                         .unstable()
-                        .error(format!(
-                            "Incorrect order, missing ServiceType: {}",
-                            ident
-                        ))
+                        .error(format!("Incorrect order, missing ServiceType: {}", ident))
                         .emit();
                     None
                 }
@@ -87,12 +84,17 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let service_token = if service_type.is_some() {
         Some(service_type.unwrap().unwrap())
     } else {
-        service_type.span().unstable().error(format!("Missing Service type")).emit();
+        service_type
+            .span()
+            .unstable()
+            .error(format!("Missing Service type"))
+            .emit();
         None
     };
     let service_field = parse_service_field_for_name(&input_args);
 
-    let out = match service_token.as_ref()
+    let out = match service_token
+        .as_ref()
         .unwrap()
         .path()
         .get_ident()
@@ -100,9 +102,21 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
         .to_string()
         .as_str()
     {
-        POOL_SQLITE => Some(impl_code_database(&service_token.unwrap(), item, service_field)),
-        POOL_POSTGRES => Some(impl_code_database(&service_token.unwrap(), item, service_field)),
-        WEB_SERVICE => Some(impl_code_webservice(&service_token.unwrap(), item, service_field)),
+        POOL_SQLITE => Some(impl_code_database(
+            &service_token.unwrap(),
+            item,
+            service_field,
+        )),
+        POOL_POSTGRES => Some(impl_code_database(
+            &service_token.unwrap(),
+            item,
+            service_field,
+        )),
+        WEB_SERVICE => Some(impl_code_webservice(
+            &service_token.unwrap(),
+            item,
+            service_field,
+        )),
         _ => {
             service_token
                 .span()
@@ -287,8 +301,8 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         Typed(t) => {
             let ident = &t.pat;
             Some(ident)
-        },
-        _  => None
+        }
+        _ => None,
     };
 
     let fn_block = &s.unwrap().block;
@@ -305,16 +319,23 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         format_ident!("{}", "capErrroIdent")
     };
     let capability = format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct);
-    
+
     // this needs to switch if it is a ReadAll.. Should be () then.. or a new EmptyInput type?
     let action_id = parse_metavalue_for_type_ident(&arg_path, &item_struct);
-    
+
     let out = if capability.to_string().contains("ReadAll") {
-        let action_struct = proc_macro2::Ident::new("EmptyInput",Span::call_site());
-        let out = impl_readall_function_trait(fn_signature, action_struct, item_struct, item_cap, capability, fn_block);
+        let action_struct = proc_macro2::Ident::new("EmptyInput", Span::call_site());
+        let out = impl_readall_function_trait(
+            fn_signature,
+            action_struct,
+            item_struct,
+            item_cap,
+            capability,
+            fn_block,
+        );
         out.into()
     } else {
-        let action_struct  = action_id.as_ref().unwrap().to_owned();
+        let action_struct = action_id.as_ref().unwrap().to_owned();
         let out = quote! {
             pub async fn #fn_signature<Service>(service: &Service, param: #action_struct) -> Result<#item_struct, CapServiceError>
             where
@@ -322,12 +343,12 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
             {
                 service.perform(::capabilities::#item_cap { data: param }).await
             }
-    
+
             #[async_trait]
             impl Capability<#item_cap<#action_struct>> for CapService {
                 type Data = #item_struct;
                 type Error = CapServiceError;
-    
+
                 async fn perform(&self, action: #item_cap<#action_id>) -> Result<Self::Data, Self::Error> {
                     let #fn_attrname = action.data;
                     #fn_block
@@ -336,7 +357,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         };
         out.into()
     };
-   
+
     out
 }
 
@@ -346,7 +367,7 @@ fn impl_readall_function_trait(
     item_struct: Ident,
     item_cap: Ident,
     capability: Ident,
-    fn_block: &Box<Block>,    
+    fn_block: &Box<Block>,
 ) -> TokenStream {
     let out = quote! {
         pub async fn #fn_signature<Service>(service: &Service, param: #action_struct) -> Result<Vec<#item_struct>, CapServiceError>
