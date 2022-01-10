@@ -7,10 +7,11 @@ use helpers::{
 };
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-
+use proc_macro2::Span;
 use syn::spanned::Spanned;
 use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
 use syn::FnArg::Typed;
+use syn::{Ident, Block};
 
 const POOL_SQLITE: &str = "SqliteDb";
 const POOL_POSTGRES: &str = "PostgresDb";
@@ -304,11 +305,51 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         format_ident!("{}", "capErrroIdent")
     };
     let capability = format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct);
-
+    
+    // this needs to switch if it is a ReadAll.. Should be () then.. or a new EmptyInput type?
     let action_id = parse_metavalue_for_type_ident(&arg_path, &item_struct);
+    
+    let out = if capability.to_string().contains("ReadAll") {
+        let action_struct = proc_macro2::Ident::new("EmptyInput",Span::call_site());
+        let out = impl_readall_function_trait(fn_signature, action_struct, item_struct, item_cap, capability, fn_block);
+        out.into()
+    } else {
+        let action_struct  = action_id.as_ref().unwrap().to_owned();
+        let out = quote! {
+            pub async fn #fn_signature<Service>(service: &Service, param: #action_struct) -> Result<#item_struct, CapServiceError>
+            where
+                Service: #capability,
+            {
+                service.perform(::capabilities::#item_cap { data: param }).await
+            }
+    
+            #[async_trait]
+            impl Capability<#item_cap<#action_struct>> for CapService {
+                type Data = #item_struct;
+                type Error = CapServiceError;
+    
+                async fn perform(&self, action: #item_cap<#action_id>) -> Result<Self::Data, Self::Error> {
+                    let #fn_attrname = action.data;
+                    #fn_block
+                }
+            }
+        };
+        out.into()
+    };
+   
+    out
+}
 
+fn impl_readall_function_trait(
+    fn_signature: &Ident,
+    action_struct: Ident,
+    item_struct: Ident,
+    item_cap: Ident,
+    capability: Ident,
+    fn_block: &Box<Block>,    
+) -> TokenStream {
     let out = quote! {
-        pub async fn #fn_signature<Service>(service: &Service, param: #action_id) -> Result<#item_struct, CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, param: #action_struct) -> Result<Vec<#item_struct>, CapServiceError>
         where
             Service: #capability,
         {
@@ -316,12 +357,11 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         }
 
         #[async_trait]
-        impl Capability<#item_cap<#action_id>> for CapService {
+        impl Capability<#item_cap<#action_struct>> for CapService {
             type Data = #item_struct;
             type Error = CapServiceError;
 
-            async fn perform(&self, action: #item_cap<#action_id>) -> Result<Self::Data, Self::Error> {
-                let #fn_attrname = action.data;
+            async fn perform(&self, action: #item_cap<#action_struct>) -> Result<Self::Data, Self::Error> {
                 #fn_block
             }
         }

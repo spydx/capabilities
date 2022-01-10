@@ -8,16 +8,6 @@ use sqlx::pool::Pool;
 use sqlx::sqlite::Sqlite;
 use sqlx::Postgres;
 
-pub enum Operations {
-    Create,
-    Read,
-    Update,
-    Delete,
-    ReadAll,
-    UpdateAll,
-    DeleteAll,
-}
-
 #[allow(dead_code)]
 pub struct Create<T> {
     pub data: T,
@@ -48,3 +38,4 @@ pub struct DeleteAll<T> {
 pub type SqliteDb = Pool<Sqlite>;
 pub type PostgresDb = Pool<Postgres>;
 pub type WebService = Client;
+pub struct EmptyInput;

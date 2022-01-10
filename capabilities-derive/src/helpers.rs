@@ -279,17 +279,21 @@ pub fn generate_caps(
         } else if cap.to_string().eq(&deleteall) {
             Some(quote! {
                 #capmacro
+                use capabilities::EmptyInput;
                 cap!( #cap for CapService, composing { DeleteAll<#struct_name>, (), CapServiceError});
             })
         } else if cap.to_string().eq(&updateall) {
             Some(quote! {
                 #capmacro
-                cap!( #cap for CapService, composing { UpdateAll<#struct_name>, (), CapServiceError});
+                use capabilities::EmptyInput;
+                cap!( #cap for CapService, composing { UpdateAll<#struct_name>, Vec<#struct_name>, CapServiceError});
             })
         } else if cap.to_string().eq(&readall) {
+            // Lets try EmptyInput
             Some(quote! {
                 #capmacro
-                cap!( #cap for CapService, composing { ReadAll<#struct_name>, (), CapServiceError});
+                use capabilities::EmptyInput;
+                cap!( #cap for CapService, composing { ReadAll<EmptyInput>, Vec<#struct_name>, CapServiceError});
             })
         } else {
             None
