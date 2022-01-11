@@ -187,9 +187,9 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     // this field needs to be dynamically assigned to different stuff.
 
     let struct_id = &item_struct.ident;
-    let _id_type = parse_metavalue_for_type(&id_metavalue.clone(), &item_struct);
+    let id_type = parse_metavalue_for_type(&id_metavalue.clone(), &item_struct);
 
-    let generated_caps = generate_caps(&capidents, _id_type.clone(), &struct_id);
+    let generated_caps = generate_caps(&capidents, id_type.clone(), &struct_id);
     
     quote! {
         #item_struct
@@ -351,7 +351,19 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
             fn_block,
         );
         out.into()
-    } else {
+    } else if capability.to_string().contains("UpdateAll") {
+        
+        let out = impl_updateall_function_trait(
+            fn_signature,
+            item_struct,
+            item_cap,
+            fn_attrname,
+            capability,
+            fn_block,
+        );
+        out.into()
+    }
+    else {
         let action_struct = action_id.as_ref().unwrap().to_owned();
         let out = quote! {
     
@@ -402,6 +414,40 @@ fn impl_readall_function_trait(
             type Error = CapServiceError;
 
             async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
+                #fn_block
+            }
+        }
+    };
+    out.into()
+}
+
+
+use syn::Pat;
+
+fn impl_updateall_function_trait(
+    fn_signature: &Ident,
+    item_struct: Ident,
+    item_cap: Ident,
+    fn_attrname: Option<&Box<Pat>>,
+    capability: Ident,
+    fn_block: &Box<Block>,
+) -> TokenStream {
+    let out = quote! {
+        
+        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>) -> Result<Vec<#item_struct>, CapServiceError>
+        where
+            Service: #capability,
+        {
+            service.perform(::capabilities::#item_cap { data: param }).await
+        }
+
+        #[async_trait]
+        impl Capability<#item_cap<Vec<#item_struct>>> for CapService {
+            type Data = Vec<#item_struct>;
+            type Error = CapServiceError;
+
+            async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
+                let #fn_attrname = action.data;
                 #fn_block
             }
         }

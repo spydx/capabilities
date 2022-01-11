@@ -272,16 +272,16 @@ pub fn generate_caps(
                 None
             }
         } else if cap.to_string().eq(&delete) {
-
             if id_type.is_some() {
                 Some(quote! {
                     #capmacro
-                    cap!( #cap for CapService, composing { Delete<#id_type>, (), CapServiceError});
+                    cap!( #cap for CapService, composing { Delete<#id_type>, Orders, CapServiceError});
+                    cap!( #cap for CapService, composing { Delete<#struct_name>, Orders, CapServiceError});
                 })
             } else if id_type.is_none() {
                 Some(quote! {
                    #capmacro
-                    cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
+                    cap!( #cap for CapService, composing { Delete<#struct_name>, Orders, CapServiceError});
                 })
             } else {
                 None
@@ -290,13 +290,13 @@ pub fn generate_caps(
             Some(quote! {
                 #capmacro
                 use capabilities::EmptyInput;
-                cap!( #cap for CapService, composing { DeleteAll<#struct_name>, (), CapServiceError});
+                cap!( #cap for CapService, composing { DeleteAll<Vec<#struct_name>>, (), CapServiceError});
             })
         } else if cap.to_string().eq(&updateall) {
             Some(quote! {
                 #capmacro
                 use capabilities::EmptyInput;
-                cap!( #cap for CapService, composing { UpdateAll<#struct_name>, Vec<#struct_name>, CapServiceError});
+                cap!( #cap for CapService, composing { UpdateAll<Vec<#struct_name>>, Vec<#struct_name>, CapServiceError});
             })
         } else if cap.to_string().eq(&readall) {
             // Lets try EmptyInput

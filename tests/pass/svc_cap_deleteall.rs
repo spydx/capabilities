@@ -22,6 +22,6 @@ async fn main() -> Result<(), std::io::Error> {
 }
 
 #[capability(DeleteAll, Orders)]
-fn get_order() -> Result<(), CapServiceError> {
+fn delete_all_orders() -> Result<(), CapServiceError> {
     Ok()
 }
