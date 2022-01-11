@@ -272,10 +272,20 @@ pub fn generate_caps(
                 None
             }
         } else if cap.to_string().eq(&delete) {
-            Some(quote! {
-                #capmacro
-                cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
-            })
+
+            if id_type.is_some() {
+                Some(quote! {
+                    #capmacro
+                    cap!( #cap for CapService, composing { Delete<#id_type>, (), CapServiceError});
+                })
+            } else if id_type.is_none() {
+                Some(quote! {
+                   #capmacro
+                    cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
+                })
+            } else {
+                None
+            }
         } else if cap.to_string().eq(&deleteall) {
             Some(quote! {
                 #capmacro
