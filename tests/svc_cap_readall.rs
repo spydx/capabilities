@@ -1,4 +1,3 @@
-use capabilities::EmptyInput;
 use capabilities::SqliteDb;
 use capabilities_derive::capabilities;
 use capabilities_derive::capability;
@@ -25,7 +24,8 @@ async fn main() -> Result<(), std::io::Error> {
 // if arg are missing, we get a unwrap error
 // Capability<ReadAll<Orders>> this is a problem
 #[capability(ReadAll, Orders)]
-fn get_order(id: i32) -> Result<Vec<Orders>, CapServiceError> {
+fn get_order() -> Result<Vec<Orders>, CapServiceError> {
+    
     let data: Vec<Orders> = vec![];
     Ok(data)
 }

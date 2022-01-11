@@ -11,11 +11,11 @@ note: required by a bound in `CapDeleteOrders`
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `CapDeleteOrders`
   = note: this error originates in the macro `cap` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0277]: the trait bound `CapService: Capability<capabilities::Update<Orders>>` is not satisfied
+error[E0277]: the trait bound `CapService: Capability<Update<Orders>>` is not satisfied
  --> tests/fail/cap_struct.rs:4:30
   |
 4 | #[capabilities(Create, Read, Update, Delete)]
-  |                              ^^^^^^ the trait `Capability<capabilities::Update<Orders>>` is not implemented for `CapService`
+  |                              ^^^^^^ the trait `Capability<Update<Orders>>` is not implemented for `CapService`
   |
 note: required by a bound in `CapUpdateOrders`
  --> tests/fail/cap_struct.rs:4:1
@@ -37,11 +37,11 @@ note: required by a bound in `CapReadOrders`
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `CapReadOrders`
   = note: this error originates in the macro `cap` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0277]: the trait bound `CapService: Capability<capabilities::Create<Orders>>` is not satisfied
+error[E0277]: the trait bound `CapService: Capability<Create<Orders>>` is not satisfied
  --> tests/fail/cap_struct.rs:4:16
   |
 4 | #[capabilities(Create, Read, Update, Delete)]
-  |                ^^^^^^ the trait `Capability<capabilities::Create<Orders>>` is not implemented for `CapService`
+  |                ^^^^^^ the trait `Capability<Create<Orders>>` is not implemented for `CapService`
   |
 note: required by a bound in `CapCreateOrders`
  --> tests/fail/cap_struct.rs:4:1

@@ -6,7 +6,7 @@ use helpers::{
     parse_metavalue_for_type, parse_metavalue_for_type_ident, parse_service_field_for_name,
 };
 use proc_macro::TokenStream;
-use proc_macro2::Span;
+
 use quote::{format_ident, quote};
 use syn::spanned::Spanned;
 use syn::FnArg::Typed;
@@ -172,6 +172,7 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         }
     }
     let mut capidents = vec![];
+    
     for cap in &caps {
         let capident = format_ident!(
             "{}{}{}",
@@ -181,7 +182,7 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
         );
         capidents.push(capident);
     }
-
+    
     let id_metavalue = parse_field_args_for_id(&attr_args);
     // this field needs to be dynamically assigned to different stuff.
 
@@ -189,7 +190,7 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     let _id_type = parse_metavalue_for_type(&id_metavalue.clone(), &item_struct);
 
     let generated_caps = generate_caps(&capidents, _id_type.clone(), &struct_id);
-
+    
     quote! {
         #item_struct
         #( use ::capabilities::#caps;)*
@@ -222,7 +223,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     };
 
     if s.is_none() {
-        s.span().unstable().error("Missing function").emit();
+        s.span().unstable().error("Please implement your function").emit();
     }
 
     let arg_path = if attr_args.len() == 3 {
@@ -295,16 +296,35 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         None
     };
 
+    /*let fn_signature =  if s.is_some() {
+        Some(&s.unwrap().sig.ident)
+    } else {
+        None
+    };*/
     let fn_signature = &s.unwrap().sig.ident;
-    let fn_attr = s.unwrap().sig.inputs.first().unwrap();
-    let fn_attrname = match fn_attr {
-        Typed(t) => {
-            let ident = &t.pat;
-            Some(ident)
-        }
-        _ => None,
+
+    let fn_attr = if s.unwrap().sig.inputs.first().is_some() {
+        s.unwrap().sig.inputs.first()
+    } else {
+        None
     };
 
+    println!("{:?}", fn_attr);
+
+    let fn_attrname = if fn_attr.is_some() { 
+            match fn_attr.unwrap() {
+                Typed(t) => {
+                    
+                    let ident = &t.pat;
+                    Some(ident)
+                }
+                _ => None,
+        }
+    } else {
+        None
+    };
+
+    println!("{:?}", fn_attrname);
     let fn_block = &s.unwrap().block;
 
     let item_struct = if arg_struct.is_some() {
@@ -316,15 +336,16 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     let item_cap = if arg_capability.is_some() {
         arg_capability.unwrap().path().get_ident().unwrap().clone()
     } else {
-        format_ident!("{}", "capErrroIdent")
+        format_ident!("{}", "CapErrorIdent")
     };
     let capability = format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct);
 
     // this needs to switch if it is a ReadAll.. Should be () then.. or a new EmptyInput type?
     let action_id = parse_metavalue_for_type_ident(&arg_path, &item_struct);
-
+    
     let out = if capability.to_string().contains("ReadAll") {
-        let action_struct = proc_macro2::Ident::new("EmptyInput", Span::call_site());
+        //let action_struct = proc_macro2::Ident::new("EmptyInput", Span::call_site());
+        let action_struct = format_ident!("EmptyInput");
         let out = impl_readall_function_trait(
             fn_signature,
             action_struct,
@@ -337,6 +358,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     } else {
         let action_struct = action_id.as_ref().unwrap().to_owned();
         let out = quote! {
+    
             pub async fn #fn_signature<Service>(service: &Service, param: #action_struct) -> Result<#item_struct, CapServiceError>
             where
                 Service: #capability,
@@ -363,14 +385,15 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
 
 fn impl_readall_function_trait(
     fn_signature: &Ident,
-    action_struct: Ident,
+    _action_struct: Ident,
     item_struct: Ident,
     item_cap: Ident,
     capability: Ident,
     fn_block: &Box<Block>,
 ) -> TokenStream {
     let out = quote! {
-        pub async fn #fn_signature<Service>(service: &Service, param: #action_struct) -> Result<Vec<#item_struct>, CapServiceError>
+        
+        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct) -> Result<Vec<#item_struct>, CapServiceError>
         where
             Service: #capability,
         {
@@ -378,11 +401,11 @@ fn impl_readall_function_trait(
         }
 
         #[async_trait]
-        impl Capability<#item_cap<#action_struct>> for CapService {
-            type Data = #item_struct;
+        impl Capability<#item_cap<#item_struct>> for CapService {
+            type Data = Vec<#item_struct>;
             type Error = CapServiceError;
 
-            async fn perform(&self, action: #item_cap<#action_struct>) -> Result<Self::Data, Self::Error> {
+            async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
                 #fn_block
             }
         }

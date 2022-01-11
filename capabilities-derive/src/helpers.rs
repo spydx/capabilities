@@ -231,9 +231,9 @@ pub fn generate_caps(
     let read = format_ident!("{}{}", "CapRead", struct_name).to_string();
     let update = format_ident!("{}{}", "CapUpdate", struct_name).to_string();
     let delete = format_ident!("{}{}", "CapDelete", struct_name).to_string();
-    let readall = format_ident!("{}{}", "CanReadAll", struct_name).to_string();
-    let deleteall = format_ident!("{}{}", "CanDeleteAll", struct_name).to_string();
-    let updateall = format_ident!("{}{}", "CanUpdateAll", struct_name).to_string();
+    let readall = format_ident!("{}{}", "CapReadAll", struct_name).to_string();
+    let deleteall = format_ident!("{}{}", "CapDeleteAll", struct_name).to_string();
+    let updateall = format_ident!("{}{}", "CapUpdateAll", struct_name).to_string();
 
     let mut tokens = vec![];
     let capmacro = get_cap_macro();
@@ -293,7 +293,7 @@ pub fn generate_caps(
             Some(quote! {
                 #capmacro
                 use capabilities::EmptyInput;
-                cap!( #cap for CapService, composing { ReadAll<EmptyInput>, Vec<#struct_name>, CapServiceError});
+                cap!( #cap for CapService, composing { ReadAll<#struct_name>, Vec<#struct_name>, CapServiceError});
             })
         } else {
             None
