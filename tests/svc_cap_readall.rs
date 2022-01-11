@@ -25,7 +25,6 @@ async fn main() -> Result<(), std::io::Error> {
 // Capability<ReadAll<Orders>> this is a problem
 #[capability(ReadAll, Orders)]
 fn get_order() -> Result<Vec<Orders>, CapServiceError> {
-    
     let data: Vec<Orders> = vec![];
     Ok(data)
 }

@@ -309,12 +309,9 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         None
     };
 
-    println!("{:?}", fn_attr);
-
     let fn_attrname = if fn_attr.is_some() { 
             match fn_attr.unwrap() {
-                Typed(t) => {
-                    
+                Typed(t) => {              
                     let ident = &t.pat;
                     Some(ident)
                 }
@@ -324,7 +321,6 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         None
     };
 
-    println!("{:?}", fn_attrname);
     let fn_block = &s.unwrap().block;
 
     let item_struct = if arg_struct.is_some() {
