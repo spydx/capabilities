@@ -20,7 +20,7 @@ async fn main() -> Result<(), std::io::Error> {
         .expect("Failed to create database");
     Ok(())
 }
-/*
+
 #[capability(Delete, Orders, id = "i32")]
 fn delete_order_by_id(order_id: i32) -> Result<Orders, CapServiceError> {
     let deleted = Orders {
@@ -29,7 +29,6 @@ fn delete_order_by_id(order_id: i32) -> Result<Orders, CapServiceError> {
     };
     Ok(deleted)
 }
-*/
 
 #[capability(Delete, Orders)]
 fn delete_order(order: Orders) -> Result<Orders, CapServiceError> {

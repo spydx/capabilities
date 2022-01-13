@@ -334,7 +334,12 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     } else {
         format_ident!("{}", "CapErrorIdent")
     };
-    let capability = format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct);
+    
+    let capability: Ident = if arg_path.is_none() {
+        format_ident!("{}{}{}", CAP_PREFIX, item_cap, item_struct)
+    } else {
+        format_ident!("{}{}{}{}", CAP_PREFIX,  item_cap, item_struct, "Id")
+    };
 
     // this needs to switch if it is a ReadAll.. Should be () then.. or a new EmptyInput type?
     let action_id = parse_metavalue_for_type_ident(&arg_path, &item_struct);
