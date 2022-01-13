@@ -21,8 +21,18 @@ async fn main() -> Result<(), std::io::Error> {
     Ok(())
 }
 
+
+#[capability(Read, Orders)]
+fn read_order(order: Orders) -> Result<Orders, CapServiceError> {
+    Ok(
+        Orders {
+            id: order.id,
+            name: order.name,
+        }
+    )
+}
 #[capability(Read, Orders, id = "i32")]
-fn read_order(order_id: i32) -> Result<Orders, CapServiceError> {
+fn read_order_by_id(order_id: i32) -> Result<Orders, CapServiceError> {
     Ok(Orders {
         id: order_id,
         name: "MY order".to_string(),

@@ -248,8 +248,8 @@ pub fn generate_caps(
             if id_type.is_some() {
                 Some(quote! {
                     #capmacro
-                    
                     cap!( #capid for CapService, composing { Read<#id_type>, #struct_name, CapServiceError});
+                    cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
                 })
             } else if id_type.is_none() {
                 Some(quote! {
@@ -266,6 +266,7 @@ pub fn generate_caps(
                     cap!( #capid for CapService, composing { Update<#id_type>, #struct_name, CapServiceError});
                     cap!( #cap for CapService, composing { Update<#struct_name>, #struct_name, CapServiceError});
                 })
+                
             } else if id_type.is_none() {
                 Some(quote! {
                     #capmacro
@@ -276,12 +277,13 @@ pub fn generate_caps(
             }
         } else if cap.to_string().eq(&delete) {
             if id_type.is_some() {
-                
                 Some(quote! {
                     #capmacro
-                    cap!( #capid for CapService, composing { Delete<#id_type>, #struct_name, CapServiceError});
-                    cap!( #cap for CapService, composing { Delete<#struct_name>, #struct_name, CapServiceError});
+                    cap!( #capid for CapService, composing { Delete<#id_type>, #struct_name, CapServiceError}); 
+                    cap!( #cap for CapService, composing { Delete<#struct_name>, #struct_name, CapServiceError});                  
                 })
+
+                
             } else if id_type.is_none() {
                 Some(quote! {
                    #capmacro
