@@ -451,7 +451,7 @@ fn impl_updateall_function_trait(
             type Data = Vec<#item_struct>;
             type Error = CapServiceError;
 
-            async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
+            async fn perform(&self, action: #item_cap<Vec<#item_struct>>) -> Result<Self::Data, Self::Error> {
                 let #fn_attrname = action.data;
                 #fn_block
             }

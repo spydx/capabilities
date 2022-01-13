@@ -22,9 +22,19 @@ async fn main() -> Result<(), std::io::Error> {
 }
 
 #[capability(Update, Orders, id = "i32")]
-fn update_order(order_id: i32) -> Result<Orders, CapServiceError> {
+fn update_order_by_id(order_id: i32) -> Result<Orders, CapServiceError> {
     Ok(Orders {
         id: order_id,
         name: "MY order".to_string(),
     })
+}
+
+#[capability(Update, Orders)]
+fn update_order(order: Orders) -> Result<Orders, CapServiceError> {
+    Ok(
+        Orders {
+            id: order.id+1,
+            name: "Want more of thhis order".to_string(),
+        }
+    )
 }
