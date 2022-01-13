@@ -11,7 +11,7 @@ use quote::{format_ident, quote};
 use syn::spanned::Spanned;
 use syn::FnArg::Typed;
 use syn::{parse_macro_input, AttributeArgs, Item, Meta, NestedMeta};
-use syn::{Block, Ident};
+use syn::{Block, Ident, Pat};
 
 const POOL_SQLITE: &str = "SqliteDb";
 const POOL_POSTGRES: &str = "PostgresDb";
@@ -367,6 +367,25 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
             fn_block,
         );
         out.into()
+    } else if capability.to_string().contains("DeleteAll") {
+
+        if fn_attrname.is_none() {
+            fn_attrname
+            .span()
+            .unstable()
+            .error("Missing argument for function, pass in the data you are deleting")
+            .emit();
+        }
+
+        let out = impl_deleteall_function_trait(
+            fn_signature,
+            item_struct,
+            item_cap,
+            fn_attrname,
+            capability,
+            fn_block
+        );
+        out.into()
     }
     else {
         let action_struct = action_id.as_ref().unwrap().to_owned();
@@ -426,9 +445,6 @@ fn impl_readall_function_trait(
     out.into()
 }
 
-
-use syn::Pat;
-
 fn impl_updateall_function_trait(
     fn_signature: &Ident,
     item_struct: Ident,
@@ -453,6 +469,44 @@ fn impl_updateall_function_trait(
 
             async fn perform(&self, action: #item_cap<Vec<#item_struct>>) -> Result<Self::Data, Self::Error> {
                 let #fn_attrname = action.data;
+                #fn_block
+            }
+        }
+    };
+    out.into()
+}
+
+fn impl_deleteall_function_trait(
+    fn_signature: &Ident,
+    item_struct: Ident,
+    item_cap: Ident,
+    fn_attrname: Option<&Box<Pat>>,
+    capability: Ident,
+    fn_block: &Box<Block>,
+) -> TokenStream {
+  
+    let data_accessor = if fn_attrname.is_some() {
+        quote! { let #fn_attrname = action.data; }
+    } else {
+        quote! {}
+    };
+    
+    let out = quote! {
+        
+        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>) -> Result<Vec<Orders>, CapServiceError>
+        where
+            Service: #capability,
+        {
+            service.perform(::capabilities::#item_cap { data: param }).await
+        }
+
+        #[async_trait]
+        impl Capability<#item_cap<Vec<#item_struct>>> for CapService {
+            type Data = Vec<#item_struct>;
+            type Error = CapServiceError;
+
+            async fn perform(&self, action: #item_cap<Vec<#item_struct>>) -> Result<Self::Data, Self::Error> {
+                #data_accessor
                 #fn_block
             }
         }

@@ -294,7 +294,7 @@ pub fn generate_caps(
             Some(quote! {
                 #capmacro
                 use capabilities::EmptyInput;
-                cap!( #cap for CapService, composing { DeleteAll<Vec<#struct_name>>, (), CapServiceError});
+                cap!( #cap for CapService, composing { DeleteAll<Vec<#struct_name>>, Vec<#struct_name>, CapServiceError});
             })
         } else if cap.to_string().eq(&updateall) {
             Some(quote! {
