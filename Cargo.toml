@@ -17,11 +17,13 @@ path = "tests/cap_tests.rs"
 
 [dependencies]
 quote = "1.0.14"
-syn = { version = "1.0.84", features = ["full"] }
+syn = { version = "1.0.85", features = ["full"] }
 proc-macro2 = "1.0.36"
 async-trait = "0.1.52"
-reqwest = "0.11.8"
+reqwest = "0.11.9"
 sqlx = { version = "0.5.10", features = ["migrate","runtime-actix-rustls","offline","macros", "sqlite", "postgres"] }
+actix-web = "3.3.3"
+actix-web-httpauth = "0.5.1"
 
 [dev-dependencies]
 tokio = { version = "1.15.0", features = ["full"] }
