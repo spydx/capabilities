@@ -160,6 +160,8 @@ pub fn impl_code_database(
     let out = quote! {
         use sqlx::Pool;
         use async_trait::async_trait;
+        
+        #[derive(Clone)]
         pub struct CapService {
             #field_id: #service_token,
         }
@@ -196,6 +198,8 @@ pub fn impl_code_webservice(
 
     let out = quote! {
         use async_trait::async_trait;
+        
+        #[derive(Clone)]
         pub struct CapService {
             #field_id: #service_token,
         }
