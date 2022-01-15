@@ -191,9 +191,10 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
 
     let generated_caps = generate_caps(&capidents, id_type.clone(), &struct_id);
     
+    // #( use ::capabilities::#caps;)*
     quote! {
         #item_struct
-        #( use ::capabilities::#caps;)*
+        
         #generated_caps
     }
     .into()
@@ -490,7 +491,7 @@ fn impl_deleteall_function_trait(
     } else {
         quote! {}
     };
-    
+
     let out = quote! {
         
         pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>) -> Result<Vec<Orders>, CapServiceError>

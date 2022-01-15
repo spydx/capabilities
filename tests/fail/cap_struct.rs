@@ -1,6 +1,8 @@
 use capabilities::SqliteDb;
 use capabilities_derive::capabilities;
 use capabilities_derive::service;
+use capabilities::*;
+
 #[capabilities(Create, Read, Update, Delete)]
 struct Orders {
     id: i32,

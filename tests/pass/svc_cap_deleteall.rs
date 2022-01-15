@@ -2,7 +2,7 @@ use capabilities::SqliteDb;
 use capabilities_derive::capabilities;
 use capabilities_derive::capability;
 use capabilities_derive::service;
-
+use capabilities::DeleteAll;
 #[capabilities(DeleteAll, id = "id")]
 pub struct Orders {
     #[allow(dead_code)]

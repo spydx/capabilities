@@ -2,6 +2,7 @@ use capabilities::SqliteDb;
 use capabilities_derive::capabilities;
 use capabilities_derive::capability;
 use capabilities_derive::service;
+use capabilities::Update;
 
 #[capabilities(Update, id = "id")]
 pub struct Orders {
