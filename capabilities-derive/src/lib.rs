@@ -310,6 +310,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         None
     };
 
+ 
     let fn_attrname = if fn_attr.is_some() { 
             match fn_attr.unwrap() {
                 Typed(t) => {              
@@ -319,6 +320,18 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
                 _ => None,
         }
     } else {
+        None
+    };
+
+    let _fn_attrtype = if fn_attr.is_some() {
+        match fn_attr.unwrap() {
+            Typed(t) => {
+                let attrtype = &t.ty;
+                Some(attrtype)
+            }
+            _ => None
+        }
+    }  else {
         None
     };
 
@@ -405,7 +418,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
                 type Error = CapServiceError;
 
                 async fn perform(&self, action: #item_cap<#action_id>) -> Result<Self::Data, Self::Error> {
-                    let #fn_attrname = action.data;
+                    let #fn_attr = action.data;
                     #fn_block
                 }
             }

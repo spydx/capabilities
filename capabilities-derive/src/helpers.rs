@@ -58,6 +58,7 @@ pub fn parse_service_field_for_name(attr_args: &Vec<NestedMeta>) -> Option<MetaN
 }
 
 pub fn parse_field_args_for_id(attr_args: &Vec<NestedMeta>) -> Option<MetaNameValue> {
+    
     let mut id_vec = vec![];
     for i in attr_args {
         let m = match i {
@@ -198,7 +199,7 @@ pub fn impl_code_webservice(
 
     let out = quote! {
         use async_trait::async_trait;
-        
+
         #[derive(Clone)]
         pub struct CapService {
             #field_id: #service_token,

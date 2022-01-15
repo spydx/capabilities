@@ -29,14 +29,9 @@ async fn main() -> Result<(), std::io::Error> {
     Ok(())
 }
 
-
-pub struct PersonDTO {
-    firstname: String, 
-    lastname: String,    
-}
-
 #[capabilities(Create, id = "personnummer")]
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Person {
     personnummer: i64,
     firstname: String,
@@ -51,7 +46,7 @@ impl fmt::Display for Person {
 }
 
 #[capability(Create, Person)]
-pub fn create_a_person(data: PersonDTO) -> Result<Person, CapServiceError> {
+pub fn create_a_person(data: Person) -> Result<Person, CapServiceError> {
     Ok(Person { 
         personnummer: 98127918273912,
         firstname: data.firstname,
