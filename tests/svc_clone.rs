@@ -1,6 +1,5 @@
-
-use capabilities_derive::service;
 use capabilities::SqliteDb;
+use capabilities_derive::service;
 
 #[service(SqliteDb, name = "megakult")]
 #[tokio::main]

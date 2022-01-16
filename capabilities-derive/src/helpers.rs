@@ -58,7 +58,6 @@ pub fn parse_service_field_for_name(attr_args: &Vec<NestedMeta>) -> Option<MetaN
 }
 
 pub fn parse_field_args_for_id(attr_args: &Vec<NestedMeta>) -> Option<MetaNameValue> {
-    
     let mut id_vec = vec![];
     for i in attr_args {
         let m = match i {
@@ -161,7 +160,7 @@ pub fn impl_code_database(
     let out = quote! {
         use sqlx::Pool;
         use async_trait::async_trait;
-        
+
         #[derive(Clone)]
         pub struct CapService {
             #field_id: #service_token,
@@ -239,7 +238,7 @@ pub fn generate_caps(
     let readall = format_ident!("{}{}", "CapReadAll", struct_name).to_string();
     let deleteall = format_ident!("{}{}", "CapDeleteAll", struct_name).to_string();
     let updateall = format_ident!("{}{}", "CapUpdateAll", struct_name).to_string();
-    
+
     let mut tokens = vec![];
     let capmacro = get_cap_macro();
     for cap in capabilities {
@@ -271,7 +270,6 @@ pub fn generate_caps(
                     cap!( #capid for CapService, composing { Update<#id_type>, #struct_name, CapServiceError});
                     cap!( #cap for CapService, composing { Update<#struct_name>, #struct_name, CapServiceError});
                 })
-                
             } else if id_type.is_none() {
                 Some(quote! {
                     #capmacro
@@ -282,13 +280,13 @@ pub fn generate_caps(
             }
         } else if cap.to_string().eq(&delete) {
             if id_type.is_some() {
+                let typealias = format_ident!("{}Id", struct_name);
                 Some(quote! {
                     #capmacro
-                    cap!( #capid for CapService, composing { Delete<#id_type>, #struct_name, CapServiceError}); 
-                    cap!( #cap for CapService, composing { Delete<#struct_name>, #struct_name, CapServiceError});                  
+                    type #typealias = #id_type;
+                    cap!( #capid for CapService, composing { Delete<#typealias>, #struct_name, CapServiceError});
+                    cap!( #cap for CapService, composing { Delete<#struct_name>, #struct_name, CapServiceError});
                 })
-
-                
             } else if id_type.is_none() {
                 Some(quote! {
                    #capmacro

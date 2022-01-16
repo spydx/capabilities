@@ -1,9 +1,9 @@
 use core::fmt;
 
-use capabilities_derive::service;
-use capabilities::{SqliteDb, capability};
-use capabilities_derive::capabilities;
 use capabilities::Create;
+use capabilities::{capability, SqliteDb};
+use capabilities_derive::capabilities;
+use capabilities_derive::service;
 
 #[service(SqliteDb)]
 #[tokio::main]
@@ -13,9 +13,8 @@ async fn main() -> Result<(), std::io::Error> {
         .await
         .expect("Failed to create database");
 
-
     // Should be a DTO and not a "Person"
-    let temp: Person = Person { 
+    let temp: Person = Person {
         personnummer: 0,
         firstname: "Kenenth".to_string(),
         lastname: "Fossen".to_string(),
@@ -42,12 +41,11 @@ impl fmt::Display for Person {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {})", self.firstname, self.lastname)
     }
-
 }
 
 #[capability(Create, Person)]
 pub fn create_a_person(data: Person) -> Result<Person, CapServiceError> {
-    Ok(Person { 
+    Ok(Person {
         personnummer: 98127918273912,
         firstname: data.firstname,
         lastname: data.lastname,

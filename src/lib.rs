@@ -40,7 +40,6 @@ pub type PostgresDb = Pool<Postgres>;
 pub type WebService = Client;
 pub struct EmptyInput;
 
-
 use actix_web;
 use actix_web::dev::ServiceRequest;
 use actix_web_httpauth::extractors::bearer::BearerAuth;
