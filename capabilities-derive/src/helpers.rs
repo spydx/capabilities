@@ -116,6 +116,8 @@ pub fn parse_metavalue_for_type(
     out
 }
 
+
+#[allow(dead_code)]
 pub fn parse_metavalue_for_type_ident(
     id_metavalue: &Option<MetaNameValue>,
     item_struct: &Ident,
@@ -136,6 +138,19 @@ pub fn parse_metavalue_for_type_ident(
     };
     out
 }
+
+pub fn get_id_type(
+    id_metavalue: &Option<MetaNameValue>,
+    item_struct: &Ident,
+) -> Option<Ident> {
+    let out = if id_metavalue.is_none() {
+        Some(item_struct.to_owned())
+    } else {
+        Some(format_ident!("{}Id", item_struct))
+    };
+    out
+}
+
 
 fn get_ident_from_field_name(field_name: Option<MetaNameValue>) -> Ident {
     let id_field_name = if field_name.is_some() {
@@ -238,6 +253,7 @@ pub fn generate_caps(
     let readall = format_ident!("{}{}", "CapReadAll", struct_name).to_string();
     let deleteall = format_ident!("{}{}", "CapDeleteAll", struct_name).to_string();
     let updateall = format_ident!("{}{}", "CapUpdateAll", struct_name).to_string();
+    let typealias = format_ident!("{}Id", struct_name);
 
     let mut tokens = vec![];
     let capmacro = get_cap_macro();
@@ -252,6 +268,7 @@ pub fn generate_caps(
             if id_type.is_some() {
                 Some(quote! {
                     #capmacro
+                    type #typealias = #id_type;
                     cap!( #capid for CapService, composing { Read<#id_type>, #struct_name, CapServiceError});
                     cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
                 })
@@ -267,6 +284,7 @@ pub fn generate_caps(
             if id_type.is_some() {
                 Some(quote! {
                     #capmacro
+                    type #typealias = #id_type;
                     cap!( #capid for CapService, composing { Update<#id_type>, #struct_name, CapServiceError});
                     cap!( #cap for CapService, composing { Update<#struct_name>, #struct_name, CapServiceError});
                 })
@@ -280,7 +298,6 @@ pub fn generate_caps(
             }
         } else if cap.to_string().eq(&delete) {
             if id_type.is_some() {
-                let typealias = format_ident!("{}Id", struct_name);
                 Some(quote! {
                     #capmacro
                     type #typealias = #id_type;

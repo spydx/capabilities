@@ -3,7 +3,7 @@ mod helpers;
 
 use helpers::{
     generate_caps, impl_code_database, impl_code_webservice, parse_field_args_for_id,
-    parse_metavalue_for_type, parse_metavalue_for_type_ident, parse_service_field_for_name,
+    parse_metavalue_for_type, get_id_type, parse_service_field_for_name,
 };
 use proc_macro::TokenStream;
 
@@ -353,8 +353,8 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     };
 
     // this needs to switch if it is a ReadAll.. Should be () then.. or a new EmptyInput type?
-    let action_id = parse_metavalue_for_type_ident(&arg_path, &item_struct);
-
+    let action_id = get_id_type(&arg_path, &item_struct);
+    
     let out = if capability.to_string().contains("ReadAll") {
         //let action_struct = proc_macro2::Ident::new("EmptyInput", Span::call_site());
         let action_struct = format_ident!("EmptyInput");
@@ -397,9 +397,8 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         out.into()
     } else {
         let action_struct = action_id.as_ref().unwrap().to_owned();
-        println!("{:#?}", action_struct);
         let _typealias = format_ident!("{}Id", action_struct);
-        println!("{:#?}", _typealias);
+        //println!("{:#?}: {:#?}",action_struct,  _typealias);
         let out = quote! {
 
             pub async fn #fn_signature<Service>(service: &Service, param: #action_struct) -> Result<#item_struct, CapServiceError>
