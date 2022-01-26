@@ -188,13 +188,13 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
 
     let struct_id = &item_struct.ident;
     let id_type = parse_metavalue_for_type(&id_metavalue.clone(), &item_struct);
-
+    let typealias = format_ident!("{}Id", struct_id);
     let generated_caps = generate_caps(&capidents, id_type.clone(), &struct_id);
 
     // #( use ::capabilities::#caps;)*
     quote! {
         #item_struct
-
+        pub struct #typealias{ id: #id_type }
         #generated_caps
     }
     .into()

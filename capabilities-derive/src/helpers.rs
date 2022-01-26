@@ -253,7 +253,7 @@ pub fn generate_caps(
     let readall = format_ident!("{}{}", "CapReadAll", struct_name).to_string();
     let deleteall = format_ident!("{}{}", "CapDeleteAll", struct_name).to_string();
     let updateall = format_ident!("{}{}", "CapUpdateAll", struct_name).to_string();
-    let typealias = format_ident!("{}Id", struct_name);
+    let idstruct = format_ident!("{}Id", struct_name);
 
     let mut tokens = vec![];
     let capmacro = get_cap_macro();
@@ -268,8 +268,8 @@ pub fn generate_caps(
             if id_type.is_some() {
                 Some(quote! {
                     #capmacro
-                    type #typealias = #id_type;
-                    cap!( #capid for CapService, composing { Read<#id_type>, #struct_name, CapServiceError});
+
+                    cap!( #capid for CapService, composing { Read<#idstruct>, #struct_name, CapServiceError});
                     cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
                 })
             } else if id_type.is_none() {
@@ -284,8 +284,8 @@ pub fn generate_caps(
             if id_type.is_some() {
                 Some(quote! {
                     #capmacro
-                    type #typealias = #id_type;
-                    cap!( #capid for CapService, composing { Update<#id_type>, #struct_name, CapServiceError});
+
+                    cap!( #capid for CapService, composing { Update<#idstruct>, #struct_name, CapServiceError});
                     cap!( #cap for CapService, composing { Update<#struct_name>, #struct_name, CapServiceError});
                 })
             } else if id_type.is_none() {
@@ -300,8 +300,8 @@ pub fn generate_caps(
             if id_type.is_some() {
                 Some(quote! {
                     #capmacro
-                    type #typealias = #id_type;
-                    cap!( #capid for CapService, composing { Delete<#typealias>, #struct_name, CapServiceError});
+
+                    cap!( #capid for CapService, composing { Delete<#idstruct>, #struct_name, CapServiceError});
                     cap!( #cap for CapService, composing { Delete<#struct_name>, #struct_name, CapServiceError});
                 })
             } else if id_type.is_none() {
