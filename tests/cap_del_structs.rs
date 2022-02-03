@@ -56,7 +56,7 @@ pub fn delete_a_person(data: Person) -> Result<Person, CapServiceError> {
 #[capability(Delete, Person, id = "i64")]
 pub fn delete_a_person_by_id(_data: PersonId) -> Result<Person, CapServiceError> {
     Ok(Person {
-        personnummer: _data,
+        personnummer: _data.id,
         firstname: "fistname".to_string(),
         lastname: "lastname".to_string(),
     })

@@ -23,9 +23,9 @@ async fn main() -> Result<(), std::io::Error> {
 }
 
 #[capability(Delete, Orders, id = "i32")]
-fn delete_order_by_id(order_id: i32) -> Result<Orders, CapServiceError> {
+fn delete_order_by_id(order_id: OrdersId) -> Result<Orders, CapServiceError> {
     let deleted = Orders {
-        id: order_id,
+        id: order_id.id,
         name: "MY order".to_string(),
     };
     Ok(deleted)

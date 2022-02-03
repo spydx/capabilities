@@ -1,3 +1,11 @@
+error: expected type, found `}`
+ --> tests/fail/cap_struct.rs:6:1
+  |
+6 | #[capabilities(Create, Read, Update, Delete)]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected type
+  |
+  = note: this error originates in the attribute macro `capabilities` (in Nightly builds, run with -Z macro-backtrace for more info)
+
 error[E0277]: the trait bound `CapService: Capability<capabilities::Delete<Orders>>` is not satisfied
  --> tests/fail/cap_struct.rs:6:38
   |

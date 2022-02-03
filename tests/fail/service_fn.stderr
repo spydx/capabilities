@@ -1,15 +1,15 @@
 error: Unsupported literal, has to be a type from Capabilities lib
- --> $DIR/database.rs:3:1
+ --> tests/fail/service_fn.rs:9:1
   |
-3 | #[service]
+9 | #[service]
   | ^^^^^^^^^^
   |
   = note: this error originates in the attribute macro `service` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error: custom attribute panicked
- --> $DIR/database.rs:3:1
+ --> tests/fail/service_fn.rs:9:1
   |
-3 | #[service]
+9 | #[service]
   | ^^^^^^^^^^
   |
   = help: message: called `Option::unwrap()` on a `None` value

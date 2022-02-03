@@ -1,0 +1,42 @@
+error[E0432]: unresolved import `capabilities_derive::capabilty`
+ --> tests/fail/capability_fn_missing_struct.rs:3:5
+  |
+3 | use capabilities_derive::capabilty;
+  |     ^^^^^^^^^^^^^^^^^^^^^---------
+  |     |                    |
+  |     |                    help: a similar name exists in the module: `capability`
+  |     no `capabilty` in the root
+
+error: cannot determine resolution for the attribute macro `capabilty`
+  --> tests/fail/capability_fn_missing_struct.rs:24:3
+   |
+24 | #[capabilty(Orders, Read)]
+   |   ^^^^^^^^^
+   |
+   = note: import resolution is stuck, try simplifying macro imports
+
+error[E0412]: cannot find type `CapServiceErrro` in this scope
+  --> tests/fail/capability_fn_missing_struct.rs:25:34
+   |
+13 | #[service(SqliteDb)]
+   | -------------------- similarly named struct `CapServiceError` defined here
+...
+25 | fn get_order() -> Result<Orders, CapServiceErrro> {
+   |                                  ^^^^^^^^^^^^^^^
+   |
+help: a struct with a similar name exists
+   |
+25 | fn get_order() -> Result<Orders, CapServiceError> {
+   |                                  ~~~~~~~~~~~~~~~
+help: you might be missing a type parameter
+   |
+25 | fn get_order<CapServiceErrro>() -> Result<Orders, CapServiceErrro> {
+   |             +++++++++++++++++
+
+warning: unused import: `capabilities_derive::capabilities`
+ --> tests/fail/capability_fn_missing_struct.rs:2:5
+  |
+2 | use capabilities_derive::capabilities;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
