@@ -14,4 +14,4 @@ syn = { version = "1.0.86", features = ["full"] }
 proc-macro2 = "1.0.36"
 async-trait = "0.1.52"
 darling = "0.13.1"
-sqlx = { version = "0.5.10", features = ["migrate","runtime-actix-rustls","offline","macros", "sqlite", "postgres"] }
+sqlx = { version = "0.5.11", features = ["migrate","runtime-actix-rustls","offline","macros", "sqlite", "postgres"] }
