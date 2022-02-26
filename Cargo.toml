@@ -22,8 +22,8 @@ proc-macro2 = "1.0.36"
 async-trait = "0.1.52"
 reqwest = "0.11.9"
 sqlx = { version = "0.5.11", features = ["migrate","runtime-actix-rustls","offline","macros", "sqlite", "postgres"] }
-actix-web = "3.3.3"
-actix-web-httpauth = "0.5.1"
+actix-web = "4.0.1"
+actix-web-httpauth = "0.6.0-beta.8"
 jsonwebtoken = "8.0.1"
 
 [dev-dependencies]
