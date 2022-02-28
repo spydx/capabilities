@@ -35,6 +35,10 @@ pub struct DeleteAll<T> {
     pub data: T,
 }
 
+pub enum Capability {
+    Read,
+    Write,
+}
 pub type SqliteDb = Pool<Sqlite>;
 pub type PostgresDb = Pool<Postgres>;
 pub type WebService = Client;
