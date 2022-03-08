@@ -25,6 +25,10 @@ sqlx = { version = "0.5.11", features = ["migrate","runtime-actix-rustls","offli
 actix-web = "4.0.1"
 actix-web-httpauth = "0.6.0-beta.8"
 jsonwebtoken = "8.0.1"
+futures-util = "0.3.21"
+gnap-cli = { path = "../gnap-cli" }
+log = "0.4.14"
+
 
 [dev-dependencies]
 tokio = { version = "1.17.0", features = ["full"] }
