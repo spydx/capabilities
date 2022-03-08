@@ -52,7 +52,6 @@ pub fn delete_a_person(data: Person) -> Result<Person, CapServiceError> {
     })
 }
 
-
 #[capability(Delete, Person, id = "i64")]
 pub fn delete_a_person_by_id(_data: PersonId) -> Result<Person, CapServiceError> {
     Ok(Person {
