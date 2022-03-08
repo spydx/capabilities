@@ -426,6 +426,28 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         );
         
         out.into()
+    } else if capability.to_string().eq(&format!("{}{}{}", CAP_PREFIX, "Update", item_struct)) {
+        let item_struct = action_id.as_ref().unwrap().to_owned();
+        let out = impl_update_function_trait(
+            fn_signature, 
+            item_struct,
+            item_cap,
+            fn_attrname,
+            capability,
+            fn_block
+        );
+        out.into()
+    } else if capability.to_string().eq(&format!("{}{}{}{}", CAP_PREFIX, "Update", item_struct, "Id")) {
+        let item_struct = action_id.as_ref().unwrap().to_owned();
+        let out = impl_update_function_trait(
+            fn_signature, 
+            item_struct,
+            item_cap,
+            fn_attrname,
+            capability,
+            fn_block
+        );
+        out.into()
     } else {
         let action_struct = action_id.as_ref().unwrap().to_owned();
         let _typealias = format_ident!("{}Id", action_struct);
@@ -496,7 +518,7 @@ fn impl_updateall_function_trait(
 ) -> TokenStream {
     let out = quote! {
 
-        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>) -> Result<Vec<#item_struct>, CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>) -> Result<(), CapServiceError>
         where
             Service: #capability,
         {
@@ -505,7 +527,7 @@ fn impl_updateall_function_trait(
 
         #[async_trait]
         impl Capability<#item_cap<Vec<#item_struct>>> for CapService {
-            type Data = Vec<#item_struct>;
+            type Data = ();
             type Error = CapServiceError;
 
             async fn perform(&self, action: #item_cap<Vec<#item_struct>>) -> Result<Self::Data, Self::Error> {
@@ -533,7 +555,7 @@ fn impl_deleteall_function_trait(
 
     let out = quote! {
 
-        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>) -> Result<Vec<Orders>, CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>) -> Result<(), CapServiceError>
         where
             Service: #capability,
         {
@@ -541,8 +563,8 @@ fn impl_deleteall_function_trait(
         }
 
         #[async_trait]
-        impl Capability<#item_cap<Vec<#item_struct>>> for CapService {
-            type Data = Vec<#item_struct>;
+        impl Capability<#item_cap<(Vec<#item_struct>)>> for CapService {
+            type Data = ();
             type Error = CapServiceError;
 
             async fn perform(&self, action: #item_cap<Vec<#item_struct>>) -> Result<Self::Data, Self::Error> {
@@ -586,6 +608,38 @@ fn impl_delete_function_trait(
 
             async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
                 #data_accessor
+                #fn_block
+            }
+        }
+    };
+    out.into()
+}
+
+
+fn impl_update_function_trait(
+    fn_signature: &Ident,
+    item_struct: Ident,
+    item_cap: Ident,
+    fn_attrname: Option<&Box<Pat>>,
+    capability: Ident,
+    fn_block: &Box<Block>,
+) -> TokenStream {
+    let out = quote! {
+
+        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct) -> Result<(), CapServiceError>
+        where
+            Service: #capability,
+        {
+            service.perform(::capabilities::#item_cap { data: param }).await
+        }
+
+        #[async_trait]
+        impl Capability<#item_cap<#item_struct>> for CapService {
+            type Data = ();
+            type Error = CapServiceError;
+
+            async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
+                let #fn_attrname = action.data;
                 #fn_block
             }
         }

@@ -21,8 +21,8 @@ async fn main() -> Result<(), std::io::Error> {
     };
 
     match delete_a_person(&pool, temp).await {
-            Ok(_) => println!("Deleted"),
-            Err(_) => println!("Unexpected error")
+            Ok(_) => (),
+            Err(_) => (),
     }
 
     Ok(())

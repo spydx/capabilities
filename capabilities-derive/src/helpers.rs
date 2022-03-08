@@ -286,7 +286,7 @@ pub fn generate_caps(
             } else if id_type.is_none() {
                 Some(quote! {
                     #capmacro
-                    cap!( #cap for CapService, composing { Update<#struct_name>, #struct_name, CapServiceError});
+                    cap!( #cap for CapService, composing { Update<#struct_name>, (), CapServiceError});
                 })
             } else {
                 None

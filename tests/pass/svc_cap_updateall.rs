@@ -28,5 +28,5 @@ fn update_orders(orders: Vec<Orders>) -> Result<(), CapServiceError> {
     for o in orders {
         data.push(o);
     }
-    Ok(data)
+    Ok(())
 }
