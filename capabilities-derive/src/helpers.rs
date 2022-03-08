@@ -116,7 +116,6 @@ pub fn parse_metavalue_for_type(
     out
 }
 
-
 #[allow(dead_code)]
 pub fn parse_metavalue_for_type_ident(
     id_metavalue: &Option<MetaNameValue>,
@@ -139,10 +138,7 @@ pub fn parse_metavalue_for_type_ident(
     out
 }
 
-pub fn get_id_type(
-    id_metavalue: &Option<MetaNameValue>,
-    item_struct: &Ident,
-) -> Option<Ident> {
+pub fn get_id_type(id_metavalue: &Option<MetaNameValue>, item_struct: &Ident) -> Option<Ident> {
     let out = if id_metavalue.is_none() {
         Some(item_struct.to_owned())
     } else {
@@ -150,7 +146,6 @@ pub fn get_id_type(
     };
     out
 }
-
 
 fn get_ident_from_field_name(field_name: Option<MetaNameValue>) -> Ident {
     let id_field_name = if field_name.is_some() {

@@ -21,10 +21,14 @@ syn = { version = "1.0.86", features = ["full"] }
 proc-macro2 = "1.0.36"
 async-trait = "0.1.52"
 reqwest = "0.11.9"
-sqlx = { version = "0.5.11", features = ["migrate","runtime-actix-rustls","offline","macros", "sqlite", "postgres"] }
 actix-web = "4.0.1"
+sqlx = { version = "0.5.11", features = ["migrate","runtime-actix-rustls","offline","macros", "sqlite", "postgres"] }
 actix-web-httpauth = "0.6.0"
+futures-util = "0.3.21"
+log = "0.4.14"
+gnap-cli = { path = "../gnap-cli" }
 jsonwebtoken = "8.0.1"
+
 
 [dev-dependencies]
 tokio = { version = "1.17.0", features = ["full"] }
