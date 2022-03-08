@@ -1,5 +1,6 @@
 pub extern crate capabilities_derive;
 pub mod cap_http;
+
 pub use ::capabilities_derive::capability;
 pub use ::capabilities_derive::service;
 
@@ -35,10 +36,18 @@ pub struct DeleteAll<T> {
     pub data: T,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum Capability {
     Read,
+    ReadAll,
     Write,
+    Create,
+    Update,
+    UpdateAll,
+    Delete,
+    DeleteAll,
 }
+
 pub type SqliteDb = Pool<Sqlite>;
 pub type PostgresDb = Pool<Postgres>;
 pub type WebService = Client;
