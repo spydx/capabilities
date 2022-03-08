@@ -23,19 +23,19 @@ async fn main() -> Result<(), std::io::Error> {
 }
 
 #[capability(Delete, Orders, id = "i32")]
-fn delete_order_by_id(order_id: OrdersId) -> Result<Orders, CapServiceError> {
-    let deleted = Orders {
+fn delete_order_by_id(order_id: OrdersId) -> Result<(), CapServiceError> {
+    let _deleted = Orders {
         id: order_id.id,
         name: "MY order".to_string(),
     };
-    Ok(deleted)
+    Ok(())
 }
 
 #[capability(Delete, Orders)]
-fn delete_order(order: Orders) -> Result<Orders, CapServiceError> {
+fn delete_order(order: Orders) -> Result<(), CapServiceError> {
     let _o = Orders {
         id: order.id,
         name: "MY order".to_string(),
     };
-    Ok(_o)
+    Ok(())
 }

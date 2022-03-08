@@ -395,6 +395,37 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
             fn_block,
         );
         out.into()
+    } else if capability.to_string().eq(&format!("{}{}{}", CAP_PREFIX, "Delete", item_struct)) {
+        let item_struct = action_id.as_ref().unwrap().to_owned();
+        let _typealias = format_ident!("{}Id", item_struct);
+        //println!("{:#?}: {:#?}",action_struct,  _typealias);
+
+        let out = impl_delete_function_trait(
+            fn_signature, 
+            item_struct,
+            item_cap,
+            fn_attrname,
+            capability,
+            fn_block
+        );
+        
+        out.into()
+    } else if capability.to_string().eq(&format!("{}{}{}{}", CAP_PREFIX, "Delete", item_struct, "Id")){
+        let item_struct = action_id.as_ref().unwrap().to_owned();
+        let _typealias = format_ident!("{}Id", item_struct);
+        //println!("{:#?}: {:#?}",item_struct,  _typealias);
+
+        let out = impl_delete_function_trait(
+            
+            fn_signature, 
+            item_struct,
+            item_cap,
+            fn_attrname,
+            capability,
+            fn_block
+        );
+        
+        out.into()
     } else {
         let action_struct = action_id.as_ref().unwrap().to_owned();
         let _typealias = format_ident!("{}Id", action_struct);
@@ -515,6 +546,82 @@ fn impl_deleteall_function_trait(
             type Error = CapServiceError;
 
             async fn perform(&self, action: #item_cap<Vec<#item_struct>>) -> Result<Self::Data, Self::Error> {
+                #data_accessor
+                #fn_block
+            }
+        }
+    };
+    out.into()
+}
+
+fn impl_delete_function_trait(
+    fn_signature: &Ident,
+    item_struct: Ident,
+    item_cap: Ident,
+    fn_attrname: Option<&Box<Pat>>,
+    capability: Ident,
+    fn_block: &Box<Block>,
+) -> TokenStream {
+    let _typealias = format_ident!("{}Id", item_struct);
+    //println!("{:#?}: {:#?}",action_struct,  _typealias);
+
+    let data_accessor = if fn_attrname.is_some() {
+        quote! { let #fn_attrname = action.data; }
+    } else {
+        quote! {}
+    };
+    let out = quote! {
+
+        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct) -> Result<(), CapServiceError>
+        where
+            Service: #capability,
+        {
+            service.perform(::capabilities::#item_cap { data: param }).await
+        }
+
+        #[async_trait]
+        impl Capability<#item_cap<#item_struct>> for CapService {
+            type Data = ();
+            type Error = CapServiceError;
+
+            async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
+                #data_accessor
+                #fn_block
+            }
+        }
+    };
+    out.into()
+}
+
+
+fn _impl_deleteid_function_trait(
+    fn_signature: &Ident,
+    item_struct: Ident,
+    item_cap: Ident,
+    fn_attrname: Option<&Box<Pat>>,
+    capability: Ident,
+    fn_block: &Box<Block>,
+) -> TokenStream {
+    let data_accessor = if fn_attrname.is_some() {
+        quote! { let #fn_attrname = action.data; }
+    } else {
+        quote! {}
+    };
+    let out = quote! {
+
+        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct) -> Result<(), CapServiceError>
+        where
+            Service: #capability,
+        {
+            service.perform(::capabilities::#item_cap { data: param }).await
+        }
+
+        #[async_trait]
+        impl Capability<#item_cap<#item_struct>> for CapService {
+            type Data = ();
+            type Error = CapServiceError;
+
+            async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
                 #data_accessor
                 #fn_block
             }

@@ -23,7 +23,7 @@ async fn main() -> Result<(), std::io::Error> {
 }
 
 #[capability(UpdateAll, Orders)]
-fn update_orders(orders: Vec<Orders>) -> Result<Vec<Orders>, CapServiceError> {
+fn update_orders(orders: Vec<Orders>) -> Result<(), CapServiceError> {
     let mut data: Vec<Orders> = vec![];
     for o in orders {
         data.push(o);

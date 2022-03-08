@@ -285,8 +285,8 @@ pub fn generate_caps(
                 Some(quote! {
                     #capmacro
 
-                    cap!( #capid for CapService, composing { Update<#idstruct>, #struct_name, CapServiceError});
-                    cap!( #cap for CapService, composing { Update<#struct_name>, #struct_name, CapServiceError});
+                    cap!( #capid for CapService, composing { Update<#idstruct>, (), CapServiceError});
+                    cap!( #cap for CapService, composing { Update<#struct_name>, (), CapServiceError});
                 })
             } else if id_type.is_none() {
                 Some(quote! {
@@ -301,13 +301,13 @@ pub fn generate_caps(
                 Some(quote! {
                     #capmacro
 
-                    cap!( #capid for CapService, composing { Delete<#idstruct>, #struct_name, CapServiceError});
-                    cap!( #cap for CapService, composing { Delete<#struct_name>, #struct_name, CapServiceError});
+                    cap!( #capid for CapService, composing { Delete<#idstruct>, (), CapServiceError});
+                    cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
                 })
             } else if id_type.is_none() {
                 Some(quote! {
                    #capmacro
-                    cap!( #cap for CapService, composing { Delete<#struct_name>, #struct_name, CapServiceError});
+                    cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
                 })
             } else {
                 None
@@ -316,13 +316,13 @@ pub fn generate_caps(
             Some(quote! {
                 #capmacro
                 use capabilities::EmptyInput;
-                cap!( #cap for CapService, composing { DeleteAll<Vec<#struct_name>>, Vec<#struct_name>, CapServiceError});
+                cap!( #cap for CapService, composing { DeleteAll<Vec<#struct_name>>, (), CapServiceError});
             })
         } else if cap.to_string().eq(&updateall) {
             Some(quote! {
                 #capmacro
                 use capabilities::EmptyInput;
-                cap!( #cap for CapService, composing { UpdateAll<Vec<#struct_name>>, Vec<#struct_name>, CapServiceError});
+                cap!( #cap for CapService, composing { UpdateAll<Vec<#struct_name>>, (), CapServiceError});
             })
         } else if cap.to_string().eq(&readall) {
             // Lets try EmptyInput

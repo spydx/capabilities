@@ -20,11 +20,11 @@ async fn main() -> Result<(), std::io::Error> {
         lastname: "Fossen".to_string(),
     };
 
-    let person: Person = delete_a_person(&pool, temp)
-        .await
-        .expect("Failed to create");
+    match delete_a_person(&pool, temp).await {
+            Ok(_) => println!("Deleted"),
+            Err(_) => println!("Unexpected error")
+    }
 
-    println!("{person}");
     Ok(())
 }
 
@@ -44,20 +44,12 @@ impl fmt::Display for Person {
 }
 
 #[capability(Delete, Person)]
-pub fn delete_a_person(data: Person) -> Result<Person, CapServiceError> {
-    Ok(Person {
-        personnummer: 98127918273912,
-        firstname: data.firstname,
-        lastname: data.lastname,
-    })
+pub fn delete_a_person(_data: Person) -> Result<(), CapServiceError> {
+    Ok(())
 }
 
 
 #[capability(Delete, Person, id = "i64")]
-pub fn delete_a_person_by_id(_data: PersonId) -> Result<Person, CapServiceError> {
-    Ok(Person {
-        personnummer: _data.id,
-        firstname: "fistname".to_string(),
-        lastname: "lastname".to_string(),
-    })
+pub fn delete_a_person_by_id(_data: PersonId) -> Result<(), CapServiceError> {
+    Ok(())
 }

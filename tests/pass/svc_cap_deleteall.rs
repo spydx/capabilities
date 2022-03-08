@@ -22,7 +22,7 @@ async fn main() -> Result<(), std::io::Error> {
 }
 
 #[capability(DeleteAll, Orders)]
-fn delete_all_orders(orders: Vec<Orders>) -> Result<Vec<Orders>, CapServiceError> {
+fn delete_all_orders(orders: Vec<Orders>) -> Result<(), CapServiceError> {
     let mut deleted_orders: Vec<Orders> = vec![];
     for o in orders {
         /* 
@@ -35,5 +35,5 @@ fn delete_all_orders(orders: Vec<Orders>) -> Result<Vec<Orders>, CapServiceError
         */
         deleted_orders.push(o);
     }
-    Ok(deleted_orders)
+    Ok(())
 }
