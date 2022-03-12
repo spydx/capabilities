@@ -454,15 +454,20 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         //println!("{:#?}: {:#?}",action_struct,  _typealias);
         let out = quote! {
 
-            pub async fn #fn_signature<Service>(service: &Service, param: #action_struct) -> Result<#item_struct, CapServiceError>
+            pub async fn #fn_signature<Service>(service: &Service, param: #action_struct, cap: ::capabilities::Capability) -> Result<#item_struct, CapServiceError>
             where
                 Service: #capability,
             {
-                service.perform(::capabilities::#item_cap { data: param }).await
+                let valid = ::capabilities::#item_cap { data: param };
+                if valid.into_enum().eq(&::capabilities::Capability::Read) {
+                     service.perform(valid).await
+                } else {
+                    Err(CapServiceError)
+                }
             }
 
             #[async_trait]
-            impl Capability<#item_cap<#action_struct>> for CapService {
+            impl CapabilityTrait<#item_cap<#action_struct>> for CapService {
                 type Data = #item_struct;
                 type Error = CapServiceError;
 
@@ -663,7 +668,7 @@ fn _impl_deleteid_function_trait(
     };
     let out = quote! {
 
-        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct) -> Result<(), CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct, cap: Capability) -> Result<(), CapServiceError>
         where
             Service: #capability,
         {

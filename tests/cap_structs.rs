@@ -20,7 +20,8 @@ async fn main() -> Result<(), std::io::Error> {
         lastname: "Fossen".to_string(),
     };
 
-    let person: Person = create_a_person(&pool, temp)
+    let access = Capability::Read;
+    let person: Person = create_a_person(&pool, temp, access)
         .await
         .expect("Failed to create");
 

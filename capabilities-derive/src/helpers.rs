@@ -19,7 +19,7 @@ fn get_cap_macro() -> TokenStream2 {
         macro_rules! cap {
         ($name:ident for $type:ty, composing $({$operation:ty, $d:ty, $e:ty}),+) => {
             #[async_trait]
-            pub trait $name: $(Capability<$operation, Data = $d, Error = $e>+)+ {}
+            pub trait $name: $(CapabilityTrait<$operation, Data = $d, Error = $e>+)+ {}
 
             #[async_trait]
             impl $name for $type {}
@@ -189,7 +189,7 @@ pub fn impl_code_database(
             }
         }
         #[async_trait]
-        pub trait Capability<Operation> {
+        pub trait CapabilityTrait<Operation> {
             type Data;
             type Error;
             async fn perform(&self, _: Operation) -> Result<Self::Data, Self::Error>;
@@ -258,6 +258,15 @@ pub fn generate_caps(
             Some(quote! {
                 #capmacro
                 cap!( #cap for CapService, composing { Create<#struct_name>, #struct_name, CapServiceError});
+                use capabilities::Capability;
+                pub trait CapToEnum {
+                    fn into_enum(&self) -> Capability;
+                }
+                impl CapToEnum for Create<#struct_name> {
+                    fn into_enum(&self) -> Capability {
+                        Capability::Create
+                    }
+                }
             })
         } else if cap.to_string().eq(&read) {
             if id_type.is_some() {
@@ -266,11 +275,27 @@ pub fn generate_caps(
 
                     cap!( #capid for CapService, composing { Read<#idstruct>, #struct_name, CapServiceError});
                     cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
+                    impl ::capabilities::CapToEnum for Read<#struct_name> {
+                        fn into_enum(&self) -> ::capabilities::Capability {
+                            ::capabilities::Capability::Read
+                        }
+                    }
+
+                    impl ::capabilities::CapToEnum for Read<#idstruct> {
+                        fn into_enum(&self) -> ::capabilities::Capability {
+                            ::capabilities::Capability::Read
+                        }
+                    }
                 })
             } else if id_type.is_none() {
                 Some(quote! {
                    #capmacro
                     cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
+                    impl ::capabilities::CapToEnum for Read<#struct_name> {
+                        fn into_enum(&self) -> ::capabilities::Capability {
+                            ::capabilities::Capability::Read
+                        }
+                    }
                 })
             } else {
                 None
@@ -282,11 +307,17 @@ pub fn generate_caps(
 
                     cap!( #capid for CapService, composing { Update<#idstruct>, (), CapServiceError});
                     cap!( #cap for CapService, composing { Update<#struct_name>, (), CapServiceError});
+                    
                 })
             } else if id_type.is_none() {
                 Some(quote! {
                     #capmacro
                     cap!( #cap for CapService, composing { Update<#struct_name>, (), CapServiceError});
+                    impl ::capabilities::CapToEnum for Update<#struct_name> {
+                        fn into_enum(&self) -> ::capabilities::Capability {
+                            ::capabilities::Capability::Update
+                        }
+                    }
                 })
             } else {
                 None
@@ -303,6 +334,11 @@ pub fn generate_caps(
                 Some(quote! {
                    #capmacro
                     cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
+                    impl ::capabilities::CapToEnum for Delete<#struct_name> {
+                        fn into_enum(&self) -> ::capabilities::Capability {
+                            ::capabilities::Capability::Delete
+                        }
+                    }
                 })
             } else {
                 None

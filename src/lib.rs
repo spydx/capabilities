@@ -1,5 +1,4 @@
 pub extern crate capabilities_derive;
-pub mod cap_http;
 
 pub use ::capabilities_derive::capability;
 pub use ::capabilities_derive::service;
@@ -24,6 +23,7 @@ use log::debug;
 pub struct Create<T> {
     pub data: T,
 }
+
 #[allow(dead_code)]
 pub struct Read<T> {
     pub data: T,
@@ -52,7 +52,7 @@ pub type PostgresDb = Pool<Postgres>;
 pub type WebService = Client;
 pub struct EmptyInput;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Capability {
     Read,
     ReadAll,
@@ -75,6 +75,20 @@ impl FromRequest for Capability {
         ok(c)
     }
 }
+
+struct User;
+
+pub trait CapToEnum {
+    fn into_enum(&self) -> Capability;
+}
+
+impl CapToEnum for Read<User> {
+    fn into_enum(&self) -> Capability {
+        Capability::Read
+    }
+}
+
+
 const BASEPATH: &str = "http://localhost:8000/gnap";
 
 pub async fn token_introspection(
@@ -137,4 +151,38 @@ fn get_access_type(access_list: &Vec<AccessRequest>) -> Result<Vec<Capability>, 
         }
     }
     Ok(caps)
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    
+    #[test]
+    fn compare_to_enums() {
+
+        let res = Capability::Read.eq(&Capability::Read);
+        assert!(res)
+    }
+
+    
+    #[allow(dead_code)]
+    struct User {
+        pub name: String,
+    }
+    impl CapToEnum for Read<User> {
+        fn into_enum(&self) -> Capability {
+            Capability::Read
+        }
+    }
+
+    #[test]
+    fn convert_struct_to_enum() {
+        let user = User { name: "Kenneth".to_string()};
+        let read_user = crate::Read::<User> { data: user };
+        let c = read_user.into_enum();
+        assert_eq!(c, Capability::Read);
+        assert_ne!(c, Capability::Delete);
+
+    }
 }
