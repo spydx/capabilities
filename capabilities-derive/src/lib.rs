@@ -493,10 +493,11 @@ fn impl_readall_function_trait(
 ) -> TokenStream {
     let out = quote! {
 
-        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>, cap: ::capabilities::Capability) -> Result<Vec<#item_struct>, CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, cap: ::capabilities::Capability) -> Result<Vec<#item_struct>, CapServiceError>
         where
             Service: #capability,
         {
+            let param: Vec<#item_struct> = Vec::<#item_struct>::new();
             let valid = ::capabilities::#item_cap { data: param };
             if valid.into_enum().eq(&cap) {
                 service.perform(valid).await

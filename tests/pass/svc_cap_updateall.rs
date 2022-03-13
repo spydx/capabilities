@@ -23,7 +23,7 @@ async fn main() -> Result<(), std::io::Error> {
     let o = Orders { id: 123123, name: "Secret order".to_string()};
     list_of_orders.push(o);
 
-    let r = match update_orders(&_pool, list_of_orders, Capablity::UpdateAll).await {
+    let r = match update_orders(&_pool, list_of_orders, Capability::UpdateAll).await {
         Ok(_) => true,
         Err(_) => false,
     };
