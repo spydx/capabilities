@@ -6,11 +6,11 @@ error: expected type, found `}`
   |
   = note: this error originates in the attribute macro `capabilities` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0277]: the trait bound `CapService: Capability<capabilities::Read<Orders>>` is not satisfied
+error[E0277]: the trait bound `CapService: CapabilityTrait<capabilities::Read<Orders>>` is not satisfied
  --> tests/fail/cap_struct_missing_read.rs:6:16
   |
 6 | #[capabilities(Read)]
-  |                ^^^^ the trait `Capability<capabilities::Read<Orders>>` is not implemented for `CapService`
+  |                ^^^^ the trait `CapabilityTrait<capabilities::Read<Orders>>` is not implemented for `CapService`
   |
 note: required by a bound in `CapReadOrders`
  --> tests/fail/cap_struct_missing_read.rs:6:1
