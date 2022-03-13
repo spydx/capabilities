@@ -19,6 +19,17 @@ async fn main() -> Result<(), std::io::Error> {
     let _pool = CapService::build(connection_string)
         .await
         .expect("Failed to create database");
+
+    let order = Orders { id: 1, name: "Expensive stuff".to_string()};
+
+    let r = match create_order(&_pool, order, Capability::Create).await {
+        Ok(d) => Some(d),
+        Err(_) => None,
+    };
+
+    assert!(r.is_some());
+    assert_eq!(r.unwrap().id, 1);
+
     Ok(())
 }
 
@@ -27,6 +38,6 @@ fn create_order(order: Orders) -> Result<Orders, CapServiceError> {
     
     Ok(Orders {
         id: order.id,
-        name: "MY order".to_string(),
+        name: order.name,
     })
 }

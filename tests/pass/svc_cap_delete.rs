@@ -19,6 +19,23 @@ async fn main() -> Result<(), std::io::Error> {
     let _pool = CapService::build(connection_string)
         .await
         .expect("Failed to create database");
+
+    let order = Orders { id: 1, name: "My bad order".to_string()};
+
+    let r = match delete_order(&_pool, order, Capability::Delete).await {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+
+    assert!(r);
+
+    let r2 = match delete_order(&pool, OrdersId { id: 2}, Capability::Delete).await {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+
+    assert!(r2);
+
     Ok(())
 }
 
