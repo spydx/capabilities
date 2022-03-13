@@ -20,11 +20,12 @@ async fn main() -> Result<(), std::io::Error> {
         lastname: "Fossen".to_string(),
     };
 
-    match delete_a_person(&pool, temp).await {
-            Ok(_) => (),
-            Err(_) => (),
-    }
+    let r = match delete_a_person(&pool, temp, Capability::Delete).await {
+            Ok(_) => true,
+            Err(_) => false,
+    };
 
+    assert!(r);
     Ok(())
 }
 

@@ -459,7 +459,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
                 Service: #capability,
             {
                 let valid = ::capabilities::#item_cap { data: param };
-                if valid.into_enum().eq(&::capabilities::Capability::Read) {
+                if valid.into_enum().eq(&cap) {
                      service.perform(valid).await
                 } else {
                     Err(CapServiceError)
@@ -493,15 +493,21 @@ fn impl_readall_function_trait(
 ) -> TokenStream {
     let out = quote! {
 
-        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct) -> Result<Vec<#item_struct>, CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct, cap: ::capability::Capability) -> Result<Vec<#item_struct>, CapServiceError>
         where
             Service: #capability,
         {
-            service.perform(::capabilities::#item_cap { data: param }).await
+            let valid = ::capabilities::#item_cap { data: param };
+            if valid.into_enum().eq(&cap) {
+                service.perform(valid).await
+            } else {
+                Err(CapServiceError)
+            }
+            
         }
 
         #[async_trait]
-        impl Capability<#item_cap<#item_struct>> for CapService {
+        impl CapabilityTrait<#item_cap<#item_struct>> for CapService {
             type Data = Vec<#item_struct>;
             type Error = CapServiceError;
 
@@ -523,15 +529,20 @@ fn impl_updateall_function_trait(
 ) -> TokenStream {
     let out = quote! {
 
-        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>) -> Result<(), CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>, cap: ::capabilities::Capability) -> Result<(), CapServiceError>
         where
             Service: #capability,
         {
-            service.perform(::capabilities::#item_cap { data: param }).await
+            let valid = ::capabilities::#item_cap { data: param };
+            if valid.into_enum().eq(&cap) {
+                service.perform(valid).await
+            } else {
+                Err(CapServiceError)
+            }
         }
 
         #[async_trait]
-        impl Capability<#item_cap<Vec<#item_struct>>> for CapService {
+        impl CapabilityTrait<#item_cap<Vec<#item_struct>>> for CapService {
             type Data = ();
             type Error = CapServiceError;
 
@@ -560,15 +571,20 @@ fn impl_deleteall_function_trait(
 
     let out = quote! {
 
-        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>) -> Result<(), CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>, cap: ::capabilities::Capability) -> Result<(), CapServiceError>
         where
             Service: #capability,
         {
-            service.perform(::capabilities::#item_cap { data: param }).await
+            let valid = ::capabilities::#item_cap { data: param };
+            if valid.into_enum().eq(&cap) {
+                service.perform(valid).await
+            } else {
+                Err(CapServiceError)
+            }
         }
 
         #[async_trait]
-        impl Capability<#item_cap<(Vec<#item_struct>)>> for CapService {
+        impl CapabilityTrait<#item_cap<(Vec<#item_struct>)>> for CapService {
             type Data = ();
             type Error = CapServiceError;
 
@@ -599,15 +615,20 @@ fn impl_delete_function_trait(
     };
     let out = quote! {
 
-        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct) -> Result<(), CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct, cap: ::capabilities::Capability) -> Result<(), CapServiceError>
         where
             Service: #capability,
         {
-            service.perform(::capabilities::#item_cap { data: param }).await
+            let valid = ::capabilities::#item_cap { data: param };
+            if valid.into_enum().eq(&cap) {
+                service.perform(valid).await
+            } else {
+                Err(CapServiceError)
+            }
         }
 
         #[async_trait]
-        impl Capability<#item_cap<#item_struct>> for CapService {
+        impl CapabilityTrait<#item_cap<#item_struct>> for CapService {
             type Data = ();
             type Error = CapServiceError;
 
@@ -631,15 +652,20 @@ fn impl_update_function_trait(
 ) -> TokenStream {
     let out = quote! {
 
-        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct) -> Result<(), CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct, cap: ::capabilities::Capability) -> Result<(), CapServiceError>
         where
             Service: #capability,
         {
-            service.perform(::capabilities::#item_cap { data: param }).await
+            let valid = ::capabilities::#item_cap { data: param };
+            if valid.into_enum().eq(&cap) {
+                service.perform(valid).await
+            } else {
+                Err(CapServiceError)
+            }
         }
 
         #[async_trait]
-        impl Capability<#item_cap<#item_struct>> for CapService {
+        impl CapabilityTrait<#item_cap<#item_struct>> for CapService {
             type Data = ();
             type Error = CapServiceError;
 
@@ -672,11 +698,16 @@ fn _impl_deleteid_function_trait(
         where
             Service: #capability,
         {
-            service.perform(::capabilities::#item_cap { data: param }).await
+            let valid = ::capabilities::#item_cap { data: param };
+            if valid.into_enum().eq(&cap) {
+                service.perform(valid).await
+            } else {
+                Err(CapServiceError)
+            }
         }
 
         #[async_trait]
-        impl Capability<#item_cap<#item_struct>> for CapService {
+        impl CapabilityTrait<#item_cap<#item_struct>> for CapService {
             type Data = ();
             type Error = CapServiceError;
 

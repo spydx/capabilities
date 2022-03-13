@@ -170,6 +170,7 @@ pub fn impl_code_database(
     let out = quote! {
         use sqlx::Pool;
         use async_trait::async_trait;
+        use ::capabilities::Capability;
 
         #[derive(Clone)]
         pub struct CapService {
@@ -194,6 +195,9 @@ pub fn impl_code_database(
             type Error;
             async fn perform(&self, _: Operation) -> Result<Self::Data, Self::Error>;
         }
+        pub trait CapToEnum {
+            fn into_enum(&self) -> Capability;
+        }
         #item
     };
     out.into()
@@ -208,6 +212,7 @@ pub fn impl_code_webservice(
 
     let out = quote! {
         use async_trait::async_trait;
+        use ::capabilities::Capability;
 
         #[derive(Clone)]
         pub struct CapService {
@@ -225,10 +230,13 @@ pub fn impl_code_webservice(
             }
         }
         #[async_trait]
-        pub trait Capability<Operation> {
+        pub trait CapabilityTrait<Operation> {
             type Data;
             type Error;
             async fn perform(&self, _: Operation) -> Result<Self::Data, Self::Error>;
+        }
+        pub trait CapToEnum {
+            fn into_enum(&self) -> Capability;
         }
         #item
     };
@@ -258,10 +266,7 @@ pub fn generate_caps(
             Some(quote! {
                 #capmacro
                 cap!( #cap for CapService, composing { Create<#struct_name>, #struct_name, CapServiceError});
-                use capabilities::Capability;
-                pub trait CapToEnum {
-                    fn into_enum(&self) -> Capability;
-                }
+                
                 impl CapToEnum for Create<#struct_name> {
                     fn into_enum(&self) -> Capability {
                         Capability::Create
@@ -275,13 +280,13 @@ pub fn generate_caps(
 
                     cap!( #capid for CapService, composing { Read<#idstruct>, #struct_name, CapServiceError});
                     cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
-                    impl ::capabilities::CapToEnum for Read<#struct_name> {
+                    impl CapToEnum for Read<#struct_name> {
                         fn into_enum(&self) -> ::capabilities::Capability {
                             ::capabilities::Capability::Read
                         }
                     }
 
-                    impl ::capabilities::CapToEnum for Read<#idstruct> {
+                    impl CapToEnum for Read<#idstruct> {
                         fn into_enum(&self) -> ::capabilities::Capability {
                             ::capabilities::Capability::Read
                         }
@@ -291,7 +296,7 @@ pub fn generate_caps(
                 Some(quote! {
                    #capmacro
                     cap!( #cap for CapService, composing { Read<#struct_name>, #struct_name, CapServiceError});
-                    impl ::capabilities::CapToEnum for Read<#struct_name> {
+                    impl CapToEnum for Read<#struct_name> {
                         fn into_enum(&self) -> ::capabilities::Capability {
                             ::capabilities::Capability::Read
                         }
@@ -307,13 +312,23 @@ pub fn generate_caps(
 
                     cap!( #capid for CapService, composing { Update<#idstruct>, (), CapServiceError});
                     cap!( #cap for CapService, composing { Update<#struct_name>, (), CapServiceError});
+                    impl CapToEnum for Update<#struct_name> {
+                        fn into_enum(&self) -> Capability {
+                            Capability::Update
+                        }
+                    }
+                    impl CapToEnum for Update<#idstruct> {
+                        fn into_enum(&self) -> Capability {
+                            Capability::Update
+                        }
+                    }
                     
                 })
             } else if id_type.is_none() {
                 Some(quote! {
                     #capmacro
                     cap!( #cap for CapService, composing { Update<#struct_name>, (), CapServiceError});
-                    impl ::capabilities::CapToEnum for Update<#struct_name> {
+                    impl CapToEnum for Update<#struct_name> {
                         fn into_enum(&self) -> ::capabilities::Capability {
                             ::capabilities::Capability::Update
                         }
@@ -329,12 +344,23 @@ pub fn generate_caps(
 
                     cap!( #capid for CapService, composing { Delete<#idstruct>, (), CapServiceError});
                     cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
+                    impl CapToEnum for Delete<#struct_name> {
+                        fn into_enum(&self) -> Capability {
+                            Capability::Delete
+                        }
+                    }
+
+                    impl CapToEnum for Delete<#idstruct> {
+                        fn into_enum(&self) -> Capability {
+                            Capability::Delete
+                        }
+                    }
                 })
             } else if id_type.is_none() {
                 Some(quote! {
                    #capmacro
                     cap!( #cap for CapService, composing { Delete<#struct_name>, (), CapServiceError});
-                    impl ::capabilities::CapToEnum for Delete<#struct_name> {
+                    impl CapToEnum for Delete<#struct_name> {
                         fn into_enum(&self) -> ::capabilities::Capability {
                             ::capabilities::Capability::Delete
                         }
@@ -348,12 +374,22 @@ pub fn generate_caps(
                 #capmacro
                 use capabilities::EmptyInput;
                 cap!( #cap for CapService, composing { DeleteAll<Vec<#struct_name>>, (), CapServiceError});
+                impl CapToEnum for DeleteAll<Vec<#struct_name>> {
+                    fn into_enum(&self) -> Capability {
+                        Capability::DeleteAll
+                    }
+                }
             })
         } else if cap.to_string().eq(&updateall) {
             Some(quote! {
                 #capmacro
                 use capabilities::EmptyInput;
                 cap!( #cap for CapService, composing { UpdateAll<Vec<#struct_name>>, (), CapServiceError});
+                impl CapToEnum for UpdateAll<Vec<#struct_name>> {
+                    fn into_enum(&self) -> Capability {
+                        Capability::UpdateAll
+                    }
+                }
             })
         } else if cap.to_string().eq(&readall) {
             // Lets try EmptyInput
@@ -361,6 +397,11 @@ pub fn generate_caps(
                 #capmacro
                 use capabilities::EmptyInput;
                 cap!( #cap for CapService, composing { ReadAll<#struct_name>, Vec<#struct_name>, CapServiceError});
+                impl CapToEnum for ReadAll<Vec<#struct_name>> {
+                    fn into_enum(&self) -> Capability {
+                        Capability::ReadAll
+                    }
+                }
             })
         } else {
             None
