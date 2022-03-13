@@ -19,6 +19,22 @@ async fn main() -> Result<(), std::io::Error> {
     let _pool = CapService::build(connection_string)
         .await
         .expect("Failed to create database");
+
+    let up_order = Orders { id: 1337, name: "Updated order".to_string()};
+
+    let r = match update_order(&_pool, up_order, Capability::Update).await {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+
+    assert!(r);
+    
+    let r2 = match update_order_by_id(&_pool, OrdersId{ id: 666}, Capability::Update).await {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+
+    assert!(r2);
     Ok(())
 }
 

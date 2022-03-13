@@ -29,7 +29,7 @@ async fn main() -> Result<(), std::io::Error> {
 
     assert!(r);
 
-    let r2 = match delete_order(&pool, OrdersId { id: 2}, Capability::Delete).await {
+    let r2 = match delete_order_by_id(&_pool, OrdersId { id: 2}, Capability::Delete).await {
         Ok(_) => true,
         Err(_) => false,
     };

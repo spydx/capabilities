@@ -18,22 +18,22 @@ async fn main() -> Result<(), std::io::Error> {
     let _pool = CapService::build(connection_string)
         .await
         .expect("Failed to create database");
+
+    let mut orders = vec![];
+    let order = Orders { id: 1, name: "bad shit needs to be deleted".to_string()};
+    orders.push(order);
+
+    let r = match delete_all_orders(&_pool, orders, Capability::DeleteAll).await {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+
+    assert!(r);
+
     Ok(())
 }
 
 #[capability(DeleteAll, Orders)]
-fn delete_all_orders(orders: Vec<Orders>) -> Result<(), CapServiceError> {
-    let mut deleted_orders: Vec<Orders> = vec![];
-    for o in orders {
-        /* 
-        sqlx::query!(r#"DELETE FROM orders WHERE id = $1 AND name = $2"#, 
-            o.id,
-            o.name
-        ).execute(self.db)
-        .await
-        .expect("Failed to delete items");
-        */
-        deleted_orders.push(o);
-    }
+fn delete_all_orders(_orders: Vec<Orders>) -> Result<(), CapServiceError> {
     Ok(())
 }

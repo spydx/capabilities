@@ -493,7 +493,7 @@ fn impl_readall_function_trait(
 ) -> TokenStream {
     let out = quote! {
 
-        pub async fn #fn_signature<Service>(service: &Service, param: #item_struct, cap: ::capability::Capability) -> Result<Vec<#item_struct>, CapServiceError>
+        pub async fn #fn_signature<Service>(service: &Service, param: Vec<#item_struct>, cap: ::capabilities::Capability) -> Result<Vec<#item_struct>, CapServiceError>
         where
             Service: #capability,
         {
@@ -507,11 +507,11 @@ fn impl_readall_function_trait(
         }
 
         #[async_trait]
-        impl CapabilityTrait<#item_cap<#item_struct>> for CapService {
+        impl CapabilityTrait<#item_cap<Vec<#item_struct>>> for CapService {
             type Data = Vec<#item_struct>;
             type Error = CapServiceError;
 
-            async fn perform(&self, action: #item_cap<#item_struct>) -> Result<Self::Data, Self::Error> {
+            async fn perform(&self, action: #item_cap<Vec<#item_struct>>) -> Result<Self::Data, Self::Error> {
                 #fn_block
             }
         }

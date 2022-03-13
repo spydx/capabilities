@@ -19,6 +19,16 @@ async fn main() -> Result<(), std::io::Error> {
     let _pool = CapService::build(connection_string)
         .await
         .expect("Failed to create database");
+    let mut list_of_orders = vec![];
+    let o = Orders { id: 123123, name: "Secret order".to_string()};
+    list_of_orders.push(o);
+
+    let r = match update_orders(&_pool, list_of_orders, Capablity::UpdateAll).await {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+
+    assert!(r);
     Ok(())
 }
 

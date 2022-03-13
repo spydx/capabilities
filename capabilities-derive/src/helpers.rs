@@ -396,7 +396,7 @@ pub fn generate_caps(
             Some(quote! {
                 #capmacro
                 use capabilities::EmptyInput;
-                cap!( #cap for CapService, composing { ReadAll<#struct_name>, Vec<#struct_name>, CapServiceError});
+                cap!( #cap for CapService, composing { ReadAll<Vec<#struct_name>>, Vec<#struct_name>, CapServiceError});
                 impl CapToEnum for ReadAll<Vec<#struct_name>> {
                     fn into_enum(&self) -> Capability {
                         Capability::ReadAll
