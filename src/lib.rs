@@ -91,6 +91,24 @@ impl CapToEnum for Read<User> {
 
 const BASEPATH: &str = "http://localhost:8000/gnap";
 
+
+#[derive(Clone)]
+pub struct FilterConfig {
+    pub basepath: String,
+    pub rs_ref: String,
+}
+
+
+impl FilterConfig {
+    pub fn build(basepath: String, rs_ref: String) -> Self {
+        Self {
+            basepath: basepath,
+            rs_ref: rs_ref
+        }
+    }
+}
+
+
 pub async fn token_introspection(
     req: ServiceRequest,
     header: BearerAuth,
