@@ -81,13 +81,13 @@ pub fn service(args: TokenStream, annotated_item: TokenStream) -> TokenStream {
             None
         }
     };
-    let service_token = if service_type.is_some() {
-        Some(service_type.unwrap().unwrap())
+    let service_token = if let Some(service_type) = service_type {
+        Some(service_type.unwrap())
     } else {
         service_type
             .span()
             .unstable()
-            .error(format!("Missing Service type"))
+            .error("Missing Service type")
             .emit();
         None
     };
@@ -160,15 +160,11 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     let mut caps = vec![];
     for t in &attr_args {
         let m = match t {
-            NestedMeta::Meta(m) => match m {
-                Meta::Path(p) => Some(p),
-                _ => None,
-            },
+            NestedMeta::Meta(Meta::Path(p)) => Some(p),
             _ => None,
         };
-        if m.is_some() {
-            let val = m.unwrap();
-            caps.push(val);
+        if let Some(val) = m {
+            caps.push(val)
         }
     }
     let mut capidents = vec![];
@@ -187,9 +183,9 @@ pub fn capabilities(args: TokenStream, annotated_item: TokenStream) -> TokenStre
     // this field needs to be dynamically assigned to different stuff.
 
     let struct_id = &item_struct.ident;
-    let id_type = parse_metavalue_for_type(&id_metavalue.clone(), &item_struct);
+    let id_type = parse_metavalue_for_type(&id_metavalue, &item_struct);
     let typealias = format_ident!("{}Id", struct_id);
-    let generated_caps = generate_caps(&capidents, id_type.clone(), &struct_id);
+    let generated_caps = generate_caps(&capidents, id_type.clone(), struct_id);
 
     // #( use ::capabilities::#caps;)*
     quote! {
@@ -239,19 +235,16 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     let arg_struct = attr_args.pop();
     let arg_capability = attr_args.pop();
 
-    let arg_path = if arg_path.is_some() {
-        match arg_path.unwrap() {
-            NestedMeta::Meta(p) => match p {
-                Meta::NameValue(nv) => {
+    let arg_path = if let Some(arg_path) = arg_path {
+        match arg_path {
+            NestedMeta::Meta(Meta::NameValue(nv)) => {
                     let field_name = format_ident!("{}", "id");
                     if nv.path.get_ident().unwrap().eq(&field_name) {
                         Some(nv)
                     } else {
                         None
                     }
-                }
-                _ => None,
-            },
+                },
             _ => None,
         }
     } else {
@@ -279,8 +272,8 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         None
     };
 
-    let arg_struct = if arg_struct.is_some() {
-        match arg_struct.unwrap() {
+    let arg_struct = if let Some(arg_struct) = arg_struct {
+        match arg_struct {
             NestedMeta::Meta(m) => Some(m),
             _ => {
                 arg_capability
@@ -308,10 +301,11 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         None
     };
 
-    let fn_attrname = if fn_attr.is_some() {
-        match fn_attr.unwrap() {
+    let fn_attrname = if let Some(fn_attr) = fn_attr {
+        match fn_attr {
             Typed(t) => {
-                let ident = &t.pat;
+                
+                let ident = t.pat.as_ref();
                 Some(ident)
             }
             _ => None,
@@ -320,10 +314,10 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         None
     };
 
-    let _fn_attrtype = if fn_attr.is_some() {
-        match fn_attr.unwrap() {
+    let _fn_attrtype = if let Some(fn_attr) = fn_attr {
+        match fn_attr {
             Typed(t) => {
-                let attrtype = &t.ty;
+                let attrtype = t.ty.as_ref();
                 Some(attrtype)
             }
             _ => None,
@@ -334,14 +328,14 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
 
     let fn_block = &s.unwrap().block;
 
-    let item_struct = if arg_struct.is_some() {
-        arg_struct.unwrap().path().get_ident().unwrap().clone()
+    let item_struct = if let Some(arg) = arg_struct {
+        arg.path().get_ident().unwrap().clone()
     } else {
         format_ident!("{}", "ErrorIdentStruct")
     };
 
-    let item_cap = if arg_capability.is_some() {
-        arg_capability.unwrap().path().get_ident().unwrap().clone()
+    let item_cap = if let Some(cap) = arg_capability {
+        cap.path().get_ident().unwrap().clone()
     } else {
         format_ident!("{}", "CapErrorIdent")
     };
@@ -354,6 +348,7 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
 
     // this needs to switch if it is a ReadAll.. Should be () then.. or a new EmptyInput type?
     let action_id = get_id_type(&arg_path, &item_struct);
+    let item_struct = action_id.as_ref().unwrap().to_owned();
 
     let out = if capability.to_string().contains("ReadAll") {
         //let action_struct = proc_macro2::Ident::new("EmptyInput", Span::call_site());
@@ -395,32 +390,14 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
             fn_block,
         );
         out.into()
-    } else if capability
-        .to_string()
-        .eq(&format!("{}{}{}", CAP_PREFIX, "Delete", item_struct))
+    } else if 
+        capability.to_string().eq(&format!("{}{}{}", CAP_PREFIX, "Delete", item_struct)) 
+        || 
+        capability.to_string().eq(&format!(
+            "{}{}{}{}",
+            CAP_PREFIX, "Delete", item_struct, "Id"
+        ))
     {
-        let item_struct = action_id.as_ref().unwrap().to_owned();
-        let _typealias = format_ident!("{}Id", item_struct);
-        //println!("{:#?}: {:#?}",action_struct,  _typealias);
-
-        let out = impl_delete_function_trait(
-            fn_signature,
-            item_struct,
-            item_cap,
-            fn_attrname,
-            capability,
-            fn_block,
-        );
-
-        out.into()
-    } else if capability.to_string().eq(&format!(
-        "{}{}{}{}",
-        CAP_PREFIX, "Delete", item_struct, "Id"
-    )) {
-        let item_struct = action_id.as_ref().unwrap().to_owned();
-        let _typealias = format_ident!("{}Id", item_struct);
-        //println!("{:#?}: {:#?}",item_struct,  _typealias);
-
         let out = impl_delete_function_trait(
             fn_signature,
             item_struct,
@@ -434,22 +411,12 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
     } else if capability
         .to_string()
         .eq(&format!("{}{}{}", CAP_PREFIX, "Update", item_struct))
+        || 
+        capability.to_string().eq(&format!(
+            "{}{}{}{}",
+            CAP_PREFIX, "Update", item_struct, "Id"
+        ))
     {
-        let item_struct = action_id.as_ref().unwrap().to_owned();
-        let out = impl_update_function_trait(
-            fn_signature,
-            item_struct,
-            item_cap,
-            fn_attrname,
-            capability,
-            fn_block,
-        );
-        out.into()
-    } else if capability.to_string().eq(&format!(
-        "{}{}{}{}",
-        CAP_PREFIX, "Update", item_struct, "Id"
-    )) {
-        let item_struct = action_id.as_ref().unwrap().to_owned();
         let out = impl_update_function_trait(
             fn_signature,
             item_struct,
@@ -461,8 +428,6 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         out.into()
     } else {
         let action_struct = action_id.as_ref().unwrap().to_owned();
-        let _typealias = format_ident!("{}Id", action_struct);
-        //println!("{:#?}: {:#?}",action_struct,  _typealias);
         let out = quote! {
 
             pub async fn #fn_signature<Service>(service: &Service, param: #action_struct, cap: ::capabilities::Capability) -> Result<#item_struct, CapServiceError>
@@ -488,10 +453,10 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
                 }
             }
         };
-        out.into()
+        out
     };
 
-    out
+    out.into()
 }
 
 fn impl_readall_function_trait(
@@ -500,7 +465,7 @@ fn impl_readall_function_trait(
     item_struct: Ident,
     item_cap: Ident,
     capability: Ident,
-    fn_block: &Box<Block>,
+    fn_block: &Block,
 ) -> TokenStream {
     let out = quote! {
 
@@ -535,9 +500,9 @@ fn impl_updateall_function_trait(
     fn_signature: &Ident,
     item_struct: Ident,
     item_cap: Ident,
-    fn_attrname: Option<&Box<Pat>>,
+    fn_attrname: Option<&Pat>,
     capability: Ident,
-    fn_block: &Box<Block>,
+    fn_block: &Block,
 ) -> TokenStream {
     let out = quote! {
 
@@ -571,9 +536,9 @@ fn impl_deleteall_function_trait(
     fn_signature: &Ident,
     item_struct: Ident,
     item_cap: Ident,
-    fn_attrname: Option<&Box<Pat>>,
+    fn_attrname: Option<&Pat>,
     capability: Ident,
-    fn_block: &Box<Block>,
+    fn_block: &Block,
 ) -> TokenStream {
     let data_accessor = if fn_attrname.is_some() {
         quote! { let #fn_attrname = action.data; }
@@ -613,9 +578,9 @@ fn impl_delete_function_trait(
     fn_signature: &Ident,
     item_struct: Ident,
     item_cap: Ident,
-    fn_attrname: Option<&Box<Pat>>,
+    fn_attrname: Option<&Pat>,
     capability: Ident,
-    fn_block: &Box<Block>,
+    fn_block: &Block,
 ) -> TokenStream {
     let _typealias = format_ident!("{}Id", item_struct);
     //println!("{:#?}: {:#?}",action_struct,  _typealias);
@@ -657,9 +622,9 @@ fn impl_update_function_trait(
     fn_signature: &Ident,
     item_struct: Ident,
     item_cap: Ident,
-    fn_attrname: Option<&Box<Pat>>,
+    fn_attrname: Option<&Pat>,
     capability: Ident,
-    fn_block: &Box<Block>,
+    fn_block: &Block,
 ) -> TokenStream {
     let out = quote! {
 
@@ -693,9 +658,9 @@ fn _impl_deleteid_function_trait(
     fn_signature: &Ident,
     item_struct: Ident,
     item_cap: Ident,
-    fn_attrname: Option<&Box<Pat>>,
+    fn_attrname: Option<&Pat>,
     capability: Ident,
-    fn_block: &Box<Block>,
+    fn_block: &Block,
 ) -> TokenStream {
     let data_accessor = if fn_attrname.is_some() {
         quote! { let #fn_attrname = action.data; }

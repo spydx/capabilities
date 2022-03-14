@@ -70,14 +70,13 @@ impl FromRequest for Capability {
     type Future = Ready<Result<Self, Self::Error>>;
 
     fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
-        let c = req.extensions().get::<Capability>().unwrap().clone();
-        println!("From middleware: {:#?}", c);
+        let c = *req.extensions().get::<Capability>().unwrap();
         ok(c)
     }
 }
 
 trait CapToEnum {
-    fn into_enum(&self) -> Capability;
+    fn into_enum(self) -> Capability;
 }
 
 pub async fn token_introspection(
@@ -113,12 +112,12 @@ pub async fn token_introspection(
                 }
                 false => {
                     println!("{:#?}", ir);
-                    return Err(actix_web::error::ErrorForbidden("Inactive token"));
+                    Err(actix_web::error::ErrorForbidden("Inactive token"))
                 }
             }
         }
         Err(_) => {
-            return Err(actix_web::error::ErrorForbidden(
+            Err(actix_web::error::ErrorForbidden(
                 "Cannot introspect this token",
             ))
         }

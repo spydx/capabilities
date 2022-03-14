@@ -31,22 +31,19 @@ pub fn parse_service_field_for_name(attr_args: &Vec<NestedMeta>) -> Option<MetaN
     let mut id_vec = vec![];
     for i in attr_args {
         let m = match i {
-            NestedMeta::Meta(m) => match m {
-                Meta::NameValue(nv) => {
+            NestedMeta::Meta(
+                Meta::NameValue(nv)) => {
                     let name = get_name_identifier();
                     if nv.path.get_ident().unwrap().eq(&name) {
                         Some(nv)
                     } else {
                         None
                     }
-                }
-                _ => None,
-            },
+                },
             _ => None,
         };
-        if m.is_some() {
-            let val = m.unwrap();
-            id_vec.push(val);
+        if let Some(val) = m {
+            id_vec.push(val)
         }
     }
     if id_vec.is_empty() {
@@ -61,21 +58,18 @@ pub fn parse_field_args_for_id(attr_args: &Vec<NestedMeta>) -> Option<MetaNameVa
     let mut id_vec = vec![];
     for i in attr_args {
         let m = match i {
-            NestedMeta::Meta(m) => match m {
-                Meta::NameValue(nv) => {
+            NestedMeta::Meta(
+                Meta::NameValue(nv)) => {
                     let id = get_id_identifier();
                     if nv.path.get_ident().unwrap().eq(&id) {
                         Some(nv)
                     } else {
                         None
                     }
-                }
-                _ => None,
-            },
+                },
             _ => None,
         };
-        if m.is_some() {
-            let val = m.unwrap();
+        if let Some(val) = m {
             id_vec.push(val);
         }
     }
@@ -156,7 +150,7 @@ fn get_ident_from_field_name(field_name: Option<MetaNameValue>) -> Ident {
     } else {
         None
     };
-    let field_name = format_ident!("{}", id_field_name.unwrap_or(FIELD_NAME.to_string()));
+    let field_name = format_ident!("{}", id_field_name.unwrap_or_else( || FIELD_NAME.to_string()));
     field_name
 }
 
@@ -406,9 +400,9 @@ pub fn generate_caps(
         } else {
             None
         };
-        if outtokens.is_some() {
-            let t = outtokens.unwrap();
-            tokens.push(t);
+
+        if let Some(token) = outtokens {
+            tokens.push(token);
         }
     }
 
