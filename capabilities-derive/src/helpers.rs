@@ -266,7 +266,7 @@ pub fn generate_caps(
             Some(quote! {
                 #capmacro
                 cap!( #cap for CapService, composing { Create<#struct_name>, #struct_name, CapServiceError});
-                
+
                 impl CapToEnum for Create<#struct_name> {
                     fn into_enum(&self) -> Capability {
                         Capability::Create
@@ -322,7 +322,7 @@ pub fn generate_caps(
                             Capability::Update
                         }
                     }
-                    
+
                 })
             } else if id_type.is_none() {
                 Some(quote! {

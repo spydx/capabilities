@@ -395,57 +395,68 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
             fn_block,
         );
         out.into()
-    } else if capability.to_string().eq(&format!("{}{}{}", CAP_PREFIX, "Delete", item_struct)) {
+    } else if capability
+        .to_string()
+        .eq(&format!("{}{}{}", CAP_PREFIX, "Delete", item_struct))
+    {
         let item_struct = action_id.as_ref().unwrap().to_owned();
         let _typealias = format_ident!("{}Id", item_struct);
         //println!("{:#?}: {:#?}",action_struct,  _typealias);
 
         let out = impl_delete_function_trait(
-            fn_signature, 
+            fn_signature,
             item_struct,
             item_cap,
             fn_attrname,
             capability,
-            fn_block
+            fn_block,
         );
-        
+
         out.into()
-    } else if capability.to_string().eq(&format!("{}{}{}{}", CAP_PREFIX, "Delete", item_struct, "Id")){
+    } else if capability.to_string().eq(&format!(
+        "{}{}{}{}",
+        CAP_PREFIX, "Delete", item_struct, "Id"
+    )) {
         let item_struct = action_id.as_ref().unwrap().to_owned();
         let _typealias = format_ident!("{}Id", item_struct);
         //println!("{:#?}: {:#?}",item_struct,  _typealias);
 
         let out = impl_delete_function_trait(
-            
-            fn_signature, 
+            fn_signature,
             item_struct,
             item_cap,
             fn_attrname,
             capability,
-            fn_block
+            fn_block,
         );
-        
+
         out.into()
-    } else if capability.to_string().eq(&format!("{}{}{}", CAP_PREFIX, "Update", item_struct)) {
+    } else if capability
+        .to_string()
+        .eq(&format!("{}{}{}", CAP_PREFIX, "Update", item_struct))
+    {
         let item_struct = action_id.as_ref().unwrap().to_owned();
         let out = impl_update_function_trait(
-            fn_signature, 
+            fn_signature,
             item_struct,
             item_cap,
             fn_attrname,
             capability,
-            fn_block
+            fn_block,
         );
         out.into()
-    } else if capability.to_string().eq(&format!("{}{}{}{}", CAP_PREFIX, "Update", item_struct, "Id")) {
+    } else if capability.to_string().eq(&format!(
+        "{}{}{}{}",
+        CAP_PREFIX, "Update", item_struct, "Id"
+    )) {
         let item_struct = action_id.as_ref().unwrap().to_owned();
         let out = impl_update_function_trait(
-            fn_signature, 
+            fn_signature,
             item_struct,
             item_cap,
             fn_attrname,
             capability,
-            fn_block
+            fn_block,
         );
         out.into()
     } else {
@@ -504,7 +515,7 @@ fn impl_readall_function_trait(
             } else {
                 Err(CapServiceError)
             }
-            
+
         }
 
         #[async_trait]
@@ -642,7 +653,6 @@ fn impl_delete_function_trait(
     out.into()
 }
 
-
 fn impl_update_function_trait(
     fn_signature: &Ident,
     item_struct: Ident,
@@ -678,7 +688,6 @@ fn impl_update_function_trait(
     };
     out.into()
 }
-
 
 fn _impl_deleteid_function_trait(
     fn_signature: &Ident,

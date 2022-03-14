@@ -15,8 +15,8 @@ use actix_web::HttpMessage;
 use actix_web::{Error, FromRequest, HttpRequest, Result};
 use futures_util::future::{ok, Ready};
 
-use gnap_cli::GnapClient;
 use gnap_cli::models::access_token::AccessRequest;
+use gnap_cli::GnapClient;
 use log::debug;
 
 #[allow(dead_code)]
@@ -76,10 +76,9 @@ impl FromRequest for Capability {
     }
 }
 
-trait CapToEnum  {
+trait CapToEnum {
     fn into_enum(&self) -> Capability;
 }
-
 
 pub async fn token_introspection(
     req: ServiceRequest,
@@ -91,7 +90,7 @@ pub async fn token_introspection(
     } else {
         return Err(actix_web::error::ErrorForbidden(
             "Gnap Client is missconfigured",
-        ))
+        ));
     };
 
     debug!("{:#?}", req);
@@ -148,19 +147,16 @@ fn get_access_type(access_list: &Vec<AccessRequest>) -> Result<Vec<Capability>, 
     Ok(caps)
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
-    
+
     #[test]
     fn compare_to_enums() {
-
         let res = Capability::Read.eq(&Capability::Read);
         assert!(res)
     }
 
-    
     #[allow(dead_code)]
     struct User {
         pub name: String,
@@ -173,11 +169,12 @@ mod test {
 
     #[test]
     fn convert_struct_to_enum() {
-        let user = User { name: "Kenneth".to_string()};
+        let user = User {
+            name: "Kenneth".to_string(),
+        };
         let read_user = crate::Read::<User> { data: user };
         let c = read_user.into_enum();
         assert_eq!(c, Capability::Read);
         assert_ne!(c, Capability::Delete);
-
     }
 }
