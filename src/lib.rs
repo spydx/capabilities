@@ -76,10 +76,8 @@ impl FromRequest for Capability {
     }
 }
 
-impl CapToEnum for Read<User> {
-    fn into_enum(&self) -> Capability {
-        Capability::Read
-    }
+trait CapToEnum  {
+    fn into_enum(&self) -> Capability;
 }
 
 #[derive(Clone)]
