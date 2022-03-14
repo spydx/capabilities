@@ -348,10 +348,8 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
 
     // this needs to switch if it is a ReadAll.. Should be () then.. or a new EmptyInput type?
     let action_id = get_id_type(&arg_path, &item_struct);
-    let item_struct = action_id.as_ref().unwrap().to_owned();
 
     let out = if capability.to_string().contains("ReadAll") {
-        //let action_struct = proc_macro2::Ident::new("EmptyInput", Span::call_site());
         let action_struct = format_ident!("EmptyInput");
         let out = impl_readall_function_trait(
             fn_signature,
@@ -392,11 +390,6 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         out.into()
     } else if 
         capability.to_string().eq(&format!("{}{}{}", CAP_PREFIX, "Delete", item_struct)) 
-        || 
-        capability.to_string().eq(&format!(
-            "{}{}{}{}",
-            CAP_PREFIX, "Delete", item_struct, "Id"
-        ))
     {
         let out = impl_delete_function_trait(
             fn_signature,
@@ -408,14 +401,24 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
         );
 
         out.into()
-    } else if capability
+    } else if 
+    capability.to_string().eq(&format!(
+        "{}{}{}{}",
+        CAP_PREFIX, "Delete", item_struct, "Id"
+    )) {
+        let out = impl_delete_function_trait(
+            fn_signature,
+            action_id.unwrap(),
+            item_cap,
+            fn_attrname,
+            capability,
+            fn_block
+        );
+        out.into()
+    }
+     else if capability
         .to_string()
         .eq(&format!("{}{}{}", CAP_PREFIX, "Update", item_struct))
-        || 
-        capability.to_string().eq(&format!(
-            "{}{}{}{}",
-            CAP_PREFIX, "Update", item_struct, "Id"
-        ))
     {
         let out = impl_update_function_trait(
             fn_signature,
@@ -425,6 +428,19 @@ pub fn capability(args: TokenStream, annotated_item: TokenStream) -> TokenStream
             capability,
             fn_block,
         );
+        out.into()
+    } else if  capability.to_string().eq(&format!(
+        "{}{}{}{}",
+        CAP_PREFIX, "Update", item_struct, "Id"
+    )) {
+        let out = impl_update_function_trait(
+            fn_signature,
+            action_id.unwrap(),
+            item_cap,
+            fn_attrname,
+            capability,
+            fn_block);
+
         out.into()
     } else {
         let action_struct = action_id.as_ref().unwrap().to_owned();

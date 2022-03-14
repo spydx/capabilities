@@ -161,7 +161,7 @@ mod test {
         pub name: String,
     }
     impl CapToEnum for Read<User> {
-        fn into_enum(&self) -> Capability {
+        fn into_enum(self) -> Capability {
             Capability::Read
         }
     }
