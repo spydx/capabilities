@@ -76,21 +76,11 @@ impl FromRequest for Capability {
     }
 }
 
-struct User;
-
-pub trait CapToEnum {
-    fn into_enum(&self) -> Capability;
-}
-
 impl CapToEnum for Read<User> {
     fn into_enum(&self) -> Capability {
         Capability::Read
     }
 }
-
-
-const BASEPATH: &str = "http://localhost:8000/gnap";
-
 
 #[derive(Clone)]
 pub struct FilterConfig {
@@ -113,13 +103,27 @@ pub async fn token_introspection(
     req: ServiceRequest,
     header: BearerAuth,
 ) -> Result<ServiceRequest, Error> {
+    let config = req.app_data::<FilterConfig>();
+    let config = if config.is_some() {
+        config.unwrap()
+    } else {
+        return Err(actix_web::error::ErrorForbidden(
+            "Filter is missconfigured",
+        ))
+    };
+
     debug!("Token: {}", header.token());
     debug!("{:#?}", req);
 
     let token = header.token().to_string();
     println!("{:#?}", token);
-    let rs_ref = "e8a2968a-f183-45a3-b63d-4bbbd1dad276".to_string();
-    let url = format!("{}", BASEPATH);
+
+    //let rs_ref = "e8a2968a-f183-45a3-b63d-4bbbd1dad276".to_string();
+    //let url = format!("{}", BASEPATH);
+    let rs_ref = config.rs_ref.clone();
+    let basepath = config.basepath.clone();
+
+    let url = format!("{}", basepath);
 
     match introspect(token, rs_ref, url).await {
         Ok(ir) => {
