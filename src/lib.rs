@@ -15,7 +15,7 @@ use actix_web::HttpMessage;
 use actix_web::{Error, FromRequest, HttpRequest, Result};
 use futures_util::future::{ok, Ready};
 
-use gnap_cli::introspect;
+use gnap_cli::GnapClient;
 use gnap_cli::models::access_token::AccessRequest;
 use log::debug;
 
@@ -80,50 +80,25 @@ trait CapToEnum  {
     fn into_enum(&self) -> Capability;
 }
 
-#[derive(Clone)]
-pub struct FilterConfig {
-    pub basepath: String,
-    pub rs_ref: String,
-}
-
-
-impl FilterConfig {
-    pub fn build(basepath: String, rs_ref: String) -> Self {
-        Self {
-            basepath: basepath,
-            rs_ref: rs_ref
-        }
-    }
-}
-
 
 pub async fn token_introspection(
     req: ServiceRequest,
     header: BearerAuth,
 ) -> Result<ServiceRequest, Error> {
-    let config = req.app_data::<FilterConfig>();
-    let config = if config.is_some() {
-        config.unwrap()
+    let gnap_client = req.app_data::<GnapClient>();
+    let gnap_client = if gnap_client.is_some() {
+        gnap_client.unwrap()
     } else {
         return Err(actix_web::error::ErrorForbidden(
-            "Filter is missconfigured",
+            "Gnap Client is missconfigured",
         ))
     };
 
-    debug!("Token: {}", header.token());
     debug!("{:#?}", req);
 
     let token = header.token().to_string();
-    println!("{:#?}", token);
 
-    //let rs_ref = "e8a2968a-f183-45a3-b63d-4bbbd1dad276".to_string();
-    //let url = format!("{}", BASEPATH);
-    let rs_ref = config.rs_ref.clone();
-    let basepath = config.basepath.clone();
-
-    let url = format!("{}", basepath);
-
-    match introspect(token, rs_ref, url).await {
+    match gnap_client.introspect(token).await {
         Ok(ir) => {
             match ir.active {
                 true => {
@@ -134,7 +109,7 @@ pub async fn token_introspection(
                         Err(_) => Capability::Invalid,
                     };
                     req.extensions_mut().insert(cap);
-                    println!("{:#?}", req);
+                    debug!("{:#?}", req);
                     Ok(req)
                 }
                 false => {
