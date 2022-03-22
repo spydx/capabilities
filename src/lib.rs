@@ -138,8 +138,7 @@ fn get_access_type(access_list: &Vec<AccessRequest>) -> Result<Vec<Capability>, 
                         "delete" => caps.push(Capability::Delete),
                         "readall" => caps.push(Capability::ReadAll),
                         "deleteall" => caps.push(Capability::DeleteAll),
-                        "updateall" => caps.push(Capability::UpdateAll)
-
+                        "updateall" => caps.push(Capability::UpdateAll),
                         _ => caps.push(Capability::Invalid),
                     }
                 }
