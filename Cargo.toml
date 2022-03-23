@@ -39,5 +39,5 @@ version = "0.1.0"
 path = "capabilities-derive"
 package = "capabilities-derive"
 
-#[workspace]
+##[workspace]
 #members = ["capabilities-derive"]
