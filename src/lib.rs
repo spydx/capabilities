@@ -100,7 +100,7 @@ pub async fn token_introspection(
         Ok(ir) => {
             match ir.active {
                 true => {
-                    //debug!("{:#?}", ir);
+                    debug!("{:#?}", ir);
                     let access_req = ir.access.unwrap();
                     let cap = match get_access_type(&access_req) {
                         Ok(cap) => cap.first().unwrap().to_owned(),
